@@ -285,11 +285,12 @@
       flex-shrink: 0;
       border: 3px solid;
     }
-    .grade-A { color: var(--safe);    border-color: var(--safe);    background: rgba(34,197,94,0.1); }
-    .grade-B { color: #86efac;        border-color: #86efac;        background: rgba(134,239,172,0.1); }
-    .grade-C { color: var(--caution); border-color: var(--caution); background: rgba(245,158,11,0.1); }
-    .grade-D { color: #fb923c;        border-color: #fb923c;        background: rgba(251,146,60,0.1); }
-    .grade-F { color: var(--avoid);   border-color: var(--avoid);   background: rgba(239,68,68,0.1); }
+    /* FIX 4: Grade colors — A=green, B=light green, C=yellow, D=orange, F=red */
+    .grade-A { color: #22c55e; border-color: #22c55e; background: rgba(34,197,94,0.1); }
+    .grade-B { color: #86efac; border-color: #86efac; background: rgba(134,239,172,0.1); }
+    .grade-C { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,0.1); }
+    .grade-D { color: #fb923c; border-color: #fb923c; background: rgba(251,146,60,0.1); }
+    .grade-F { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.1); }
     .grade-x { color: var(--muted);   border-color: var(--muted);   background: rgba(148,163,184,0.1); }
 
     .grade-info h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
@@ -307,9 +308,9 @@
       padding: 0.25rem 0.6rem;
       border-radius: 20px;
     }
-    .count-safe    { background: rgba(34,197,94,0.15);   color: var(--safe); }
-    .count-caution { background: rgba(245,158,11,0.15);  color: var(--caution); }
-    .count-avoid   { background: rgba(239,68,68,0.15);   color: var(--avoid); }
+    .count-safe    { background: rgba(34,197,94,0.15);   color: #22c55e; }
+    .count-caution { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+    .count-avoid   { background: rgba(239,68,68,0.15);   color: #ef4444; }
 
     /* Worst offenders */
     .offenders-card {
@@ -323,13 +324,13 @@
       font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: var(--avoid);
+      color: #ef4444;
       margin-bottom: 0.6rem;
     }
     .offenders-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .offender-tag {
       background: rgba(239,68,68,0.12);
-      color: var(--avoid);
+      color: #ef4444;
       border: 1px solid rgba(239,68,68,0.3);
       border-radius: 20px;
       padding: 0.2rem 0.65rem;
@@ -369,9 +370,10 @@
       overflow: hidden;
       transition: border-color 0.15s;
     }
-    .ingredient-card.safe    { border-left: 3px solid var(--safe); }
-    .ingredient-card.caution { border-left: 3px solid var(--caution); }
-    .ingredient-card.avoid   { border-left: 3px solid var(--avoid); }
+    /* FIX 4: Ingredient card left border — consistent with exact hex values */
+    .ingredient-card.safe    { border-left: 3px solid #22c55e; }
+    .ingredient-card.caution { border-left: 3px solid #f59e0b; }
+    .ingredient-card.avoid   { border-left: 3px solid #ef4444; }
 
     .ingredient-header {
       display: flex;
@@ -414,9 +416,10 @@
       padding: 0.25rem 0.6rem;
       border-radius: 20px;
     }
-    .pill-safe    { background: rgba(34,197,94,0.15);   color: var(--safe); }
-    .pill-caution { background: rgba(245,158,11,0.15);  color: var(--caution); }
-    .pill-avoid   { background: rgba(239,68,68,0.15);   color: var(--avoid); }
+    /* FIX 4: Safety pills — standardized exact hex values */
+    .pill-safe    { background: rgba(34,197,94,0.15);  color: #22c55e; }
+    .pill-caution { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .pill-avoid   { background: rgba(239,68,68,0.15);  color: #ef4444; }
 
     .chevron {
       color: var(--muted);
@@ -457,16 +460,16 @@
       border-radius: 20px;
       font-weight: 600;
     }
-    .origin-natural   { background: rgba(34,197,94,0.12);  color: var(--safe); }
-    .origin-synthetic { background: rgba(239,68,68,0.12);  color: var(--avoid); }
-    .origin-processed { background: rgba(245,158,11,0.12); color: var(--caution); }
+    .origin-natural   { background: rgba(34,197,94,0.12);  color: #22c55e; }
+    .origin-synthetic { background: rgba(239,68,68,0.12);  color: #ef4444; }
+    .origin-processed { background: rgba(245,158,11,0.12); color: #f59e0b; }
     .origin-unknown   { background: rgba(148,163,184,0.1); color: var(--muted); }
 
     .allergy-flags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
     .allergy-flag {
       font-size: 0.72rem;
       background: rgba(239,68,68,0.1);
-      color: var(--avoid);
+      color: #ef4444;
       border: 1px solid rgba(239,68,68,0.25);
       border-radius: 20px;
       padding: 0.1rem 0.45rem;
@@ -519,9 +522,9 @@
       letter-spacing: 0.07em;
       margin-bottom: 0.5rem;
     }
-    .reco-block.alternatives h4 { color: var(--safe); }
+    .reco-block.alternatives h4 { color: #22c55e; }
     .reco-block.look-for h4     { color: var(--accent); }
-    .reco-block.red-flags h4    { color: var(--avoid); }
+    .reco-block.red-flags h4    { color: #ef4444; }
 
     .reco-list {
       display: flex;
@@ -621,33 +624,7 @@
 
 <main>
 
-  <!-- Input Card -->
-  <div class="card">
-    <h2>Analyze Ingredients</h2>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="text">📝 Paste Text</button>
-      <button class="tab-btn" data-tab="photo">📷 Upload Photo</button>
-    </div>
-
-    <div id="tab-text" class="tab-panel active">
-      <textarea
-        id="ingredient-text"
-        placeholder="Paste ingredient list here...&#10;&#10;e.g. Water, Sugar, Citric Acid, Natural Flavors, Sodium Benzoate..."
-      ></textarea>
-    </div>
-
-    <div id="tab-photo" class="tab-panel">
-      <div class="upload-zone" id="upload-zone">
-        <div style="font-size: 2.5rem;">📸</div>
-        <p>Tap to upload a photo of the ingredient label</p>
-        <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
-        <input type="file" id="file-input" accept="image/*" capture="environment" />
-      </div>
-      <div id="file-preview"></div>
-    </div>
-  </div>
-
-  <!-- Product Context Card -->
+  <!-- FIX 1: Product Context Card FIRST — helps AI before ingredients are entered -->
   <div class="card">
     <h2>Product Context <span style="font-weight:400;color:var(--muted);font-size:0.72rem;text-transform:none;letter-spacing:0;">— helps AI give more accurate analysis</span></h2>
     <div class="field-group">
@@ -690,6 +667,32 @@
     </div>
   </div>
 
+  <!-- FIX 1: Ingredient Input Card SECOND -->
+  <div class="card">
+    <h2>Analyze Ingredients</h2>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="text">📝 Paste Text</button>
+      <button class="tab-btn" data-tab="photo">📷 Upload Photo</button>
+    </div>
+
+    <div id="tab-text" class="tab-panel active">
+      <textarea
+        id="ingredient-text"
+        placeholder="Paste ingredient list here...&#10;&#10;e.g. Water, Sugar, Citric Acid, Natural Flavors, Sodium Benzoate..."
+      ></textarea>
+    </div>
+
+    <div id="tab-photo" class="tab-panel">
+      <div class="upload-zone" id="upload-zone">
+        <div style="font-size: 2.5rem;">📸</div>
+        <p>Tap to upload a photo of the ingredient label</p>
+        <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
+        <input type="file" id="file-input" accept="image/*" capture="environment" />
+      </div>
+      <div id="file-preview"></div>
+    </div>
+  </div>
+
   <!-- Personal Profile Card -->
   <div class="card">
     <h2>My Allergens (optional)</h2>
@@ -703,8 +706,7 @@
   <div id="error-box"></div>
   <div id="loading">
     <div class="spinner"></div>
-    <p>Analyzing ingredients with AI...</p>
-    <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--muted);">This takes 5–15 seconds</p>
+    <p>Analyzing with AI — this may take up to 30 seconds...</p>
   </div>
 
   <!-- Results -->
