@@ -23,6 +23,7 @@
       --safe:     #22c55e;
       --caution:  #f59e0b;
       --avoid:    #ef4444;
+      --personal: #f472b6;
       --radius:   12px;
     }
     html { scroll-behavior: smooth; }
@@ -294,6 +295,28 @@
       font-weight: 600;
     }
 
+    /* Personal allergen alert on ingredient cards */
+    .personal-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: rgba(244,114,182,0.15);
+      color: var(--personal);
+      border: 1px solid rgba(244,114,182,0.4);
+      border-radius: 20px;
+      padding: 0.2rem 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .ingredient-card.personal-match {
+      border-left-color: var(--personal) !important;
+    }
+    .ingredient-card.personal-match .ingredient-header {
+      background: rgba(244,114,182,0.04);
+    }
+
     /* Ingredient list */
     #ingredients-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
@@ -406,7 +429,82 @@
       border-radius: 20px;
       padding: 0.1rem 0.45rem;
     }
+    .allergy-flag.matched {
+      background: rgba(244,114,182,0.15);
+      color: var(--personal);
+      border-color: rgba(244,114,182,0.4);
+      font-weight: 700;
+    }
     .no-flags { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Recommendations section ──────────────────────── */
+    #recommendations-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .reco-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .reco-header h3 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .reco-category {
+      font-size: 0.75rem;
+      background: rgba(56,189,248,0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: 20px;
+      padding: 0.15rem 0.5rem;
+      font-weight: 600;
+    }
+    .reco-body { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+    .reco-block h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.5rem;
+    }
+    .reco-block.alternatives h4 { color: var(--safe); }
+    .reco-block.look-for h4     { color: var(--accent); }
+    .reco-block.red-flags h4    { color: var(--avoid); }
+
+    .reco-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .reco-item {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.5;
+      padding-left: 1rem;
+      position: relative;
+    }
+    .reco-item::before {
+      position: absolute;
+      left: 0;
+    }
+    .reco-block.alternatives .reco-item::before { content: '✅'; }
+    .reco-block.red-flags    .reco-item::before { content: '🚩'; }
+
+    .look-for-text {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
 
     /* ── Demo banner ──────────────────────────────────── */
     .demo-banner {
@@ -430,7 +528,6 @@
       border: 1px solid var(--accent);
       border-radius: var(--radius);
       padding: 0.75rem 1.25rem;
-      display: none;
       align-items: center;
       gap: 0.75rem;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
@@ -455,6 +552,19 @@
       font-size: 1.2rem !important;
       padding: 0.2rem !important;
     }
+
+    /* ── Personal allergen alert bar ──────────────────── */
+    #personal-alert-bar {
+      display: none;
+      background: rgba(244,114,182,0.1);
+      border: 1px solid rgba(244,114,182,0.3);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      color: var(--personal);
+    }
+    #personal-alert-bar strong { font-weight: 700; }
   </style>
 </head>
 <body>
@@ -518,6 +628,9 @@
       ⚠️ Demo mode — no API key configured. Results are placeholders.
     </div>
 
+    <!-- Personal allergen alert (shown when matches found) -->
+    <div id="personal-alert-bar"></div>
+
     <!-- Grade card -->
     <div class="grade-card">
       <div class="grade-circle" id="grade-circle">?</div>
@@ -539,6 +652,29 @@
       Ingredient Breakdown
     </div>
     <div id="ingredients-list"></div>
+
+    <!-- Recommendations -->
+    <div id="recommendations-section" style="display:none; margin-top: 1.25rem;">
+      <div class="reco-header">
+        <h3>🛒 Smart Shopping Guide</h3>
+        <span class="reco-category" id="reco-category"></span>
+      </div>
+      <div class="reco-body">
+        <div class="reco-block alternatives">
+          <h4>✅ Cleaner Alternatives</h4>
+          <div class="reco-list" id="reco-alternatives"></div>
+        </div>
+        <div class="reco-block look-for">
+          <h4>🔍 What to Look For on Labels</h4>
+          <div class="look-for-text" id="reco-look-for"></div>
+        </div>
+        <div class="reco-block red-flags">
+          <h4>🚩 Red Flags to Avoid</h4>
+          <div class="reco-list" id="reco-red-flags"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main>
@@ -553,30 +689,89 @@
 <script>
 // ── Allergen chips ─────────────────────────────────────────────────────────
 const ALLERGENS = [
-  { id: 'nuts',      label: '🥜 Nuts' },
-  { id: 'dairy',     label: '🥛 Dairy' },
-  { id: 'gluten',    label: '🌾 Gluten' },
-  { id: 'soy',       label: '🫘 Soy' },
-  { id: 'eggs',      label: '🥚 Eggs' },
-  { id: 'shellfish', label: '🦐 Shellfish' },
-  { id: 'fish',      label: '🐟 Fish' },
-  { id: 'sesame',    label: '🌿 Sesame' },
-  { id: 'vegan',     label: '🌱 Vegan' },
+  { id: 'nuts',      label: '🥜 Nuts',     keywords: ['nut', 'peanut', 'almond', 'cashew', 'walnut', 'pecan', 'pistachio', 'hazelnut'] },
+  { id: 'dairy',     label: '🥛 Dairy',    keywords: ['dairy', 'milk', 'lactose', 'whey', 'casein', 'butter', 'cream', 'cheese'] },
+  { id: 'gluten',    label: '🌾 Gluten',   keywords: ['gluten', 'wheat', 'barley', 'rye', 'oat', 'malt', 'spelt'] },
+  { id: 'soy',       label: '🫘 Soy',      keywords: ['soy', 'soya', 'tofu', 'edamame', 'tempeh'] },
+  { id: 'eggs',      label: '🥚 Eggs',     keywords: ['egg', 'albumin', 'lecithin'] },
+  { id: 'shellfish', label: '🦐 Shellfish',keywords: ['shellfish', 'shrimp', 'crab', 'lobster', 'prawn', 'crawfish'] },
+  { id: 'fish',      label: '🐟 Fish',     keywords: ['fish', 'salmon', 'tuna', 'cod', 'tilapia', 'anchov'] },
+  { id: 'sesame',    label: '🌿 Sesame',   keywords: ['sesame', 'tahini'] },
+  { id: 'vegan',     label: '🌱 Vegan',    keywords: ['animal', 'meat', 'gelatin', 'carmine', 'lard', 'tallow', 'collagen'] },
 ];
+
+// Build allergen keyword map: { allergenId -> [keywords] }
+const ALLERGEN_KEYWORDS = {};
+ALLERGENS.forEach(a => { ALLERGEN_KEYWORDS[a.id] = a.keywords; });
 
 const grid = document.getElementById('allergen-grid');
 ALLERGENS.forEach(a => {
   const chip = document.createElement('label');
   chip.className = 'allergen-chip';
   chip.dataset.id = a.id;
-  chip.innerHTML = `<input type="checkbox" value="${a.id}" />${a.label}`;
-  chip.addEventListener('click', () => chip.classList.toggle('selected'));
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.value = a.id;
+  // Hidden but still readable via :checked
+  checkbox.style.position = 'absolute';
+  checkbox.style.opacity = '0';
+  checkbox.style.pointerEvents = 'none';
+
+  checkbox.addEventListener('change', () => {
+    chip.classList.toggle('selected', checkbox.checked);
+  });
+
+  chip.appendChild(checkbox);
+  chip.insertAdjacentText('beforeend', a.label);
   grid.appendChild(chip);
 });
 
 function getSelectedAllergens() {
-  return [...document.querySelectorAll('.allergen-chip.selected')]
-    .map(c => c.dataset.id);
+  return [...document.querySelectorAll('#allergen-grid input:checked')]
+    .map(c => c.value);
+}
+
+/**
+ * Returns true if an ingredient's allergy_flags array matches any of the user's selected allergens.
+ * Uses keyword matching since AI may use different wording.
+ */
+function ingredientMatchesAllergens(allergyFlags, selectedAllergens) {
+  if (!allergyFlags || allergyFlags.length === 0 || selectedAllergens.length === 0) return false;
+  const flagsLower = allergyFlags.map(f => f.toLowerCase());
+  for (const allergenId of selectedAllergens) {
+    const keywords = ALLERGEN_KEYWORDS[allergenId] || [allergenId];
+    for (const kw of keywords) {
+      for (const flag of flagsLower) {
+        if (flag.includes(kw) || kw.includes(flag)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Returns matched allergen labels for a given ingredient.
+ */
+function getMatchedAllergenLabels(allergyFlags, selectedAllergens) {
+  if (!allergyFlags || allergyFlags.length === 0 || selectedAllergens.length === 0) return [];
+  const flagsLower = allergyFlags.map(f => f.toLowerCase());
+  const matched = [];
+  for (const allergenId of selectedAllergens) {
+    const keywords = ALLERGEN_KEYWORDS[allergenId] || [allergenId];
+    for (const kw of keywords) {
+      for (const flag of flagsLower) {
+        if (flag.includes(kw) || kw.includes(flag)) {
+          const allergen = ALLERGENS.find(a => a.id === allergenId);
+          if (allergen && !matched.includes(allergen.label)) {
+            matched.push(allergen.label);
+          }
+          break;
+        }
+      }
+    }
+  }
+  return matched;
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
@@ -613,6 +808,9 @@ function handleFile(file) {
 // ── Analyze ────────────────────────────────────────────────────────────────
 document.getElementById('analyze-btn').addEventListener('click', analyze);
 
+// Track selected allergens at time of analysis for highlighting
+let activeAllergens = [];
+
 async function analyze() {
   const btn       = document.getElementById('analyze-btn');
   const loading   = document.getElementById('loading');
@@ -625,6 +823,9 @@ async function analyze() {
   loading.style.display  = 'block';
   btn.disabled = true;
 
+  // Capture allergens at time of submit
+  activeAllergens = getSelectedAllergens();
+
   try {
     let data;
 
@@ -636,7 +837,7 @@ async function analyze() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ingredients: text,
-          profile: { allergens: getSelectedAllergens() }
+          profile: { allergens: activeAllergens }
         })
       });
       data = await resp.json();
@@ -646,13 +847,13 @@ async function analyze() {
       if (!selectedFile) throw new Error('Please select an image first');
       const form = new FormData();
       form.append('file', selectedFile);
-      form.append('profile', JSON.stringify({ allergens: getSelectedAllergens() }));
+      form.append('profile', JSON.stringify({ allergens: activeAllergens }));
       const resp = await fetch('/analyze', { method: 'POST', body: form });
       data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Analysis failed');
     }
 
-    renderResults(data);
+    renderResults(data, activeAllergens);
 
   } catch (err) {
     errorBox.textContent = '❌ ' + err.message;
@@ -664,7 +865,8 @@ async function analyze() {
 }
 
 // ── Render results ─────────────────────────────────────────────────────────
-function renderResults(data) {
+function renderResults(data, selectedAllergens) {
+  selectedAllergens = selectedAllergens || [];
   const results = document.getElementById('results');
   results.style.display = 'block';
 
@@ -702,28 +904,80 @@ function renderResults(data) {
     offendersCard.style.display = 'none';
   }
 
+  // Personal allergen alert bar
+  const alertBar = document.getElementById('personal-alert-bar');
+  if (selectedAllergens.length > 0) {
+    // Find all ingredients that match
+    const matchedNames = [];
+    (data.ingredients || []).forEach(ing => {
+      if (ingredientMatchesAllergens(ing.allergy_flags, selectedAllergens)) {
+        matchedNames.push(ing.name);
+      }
+    });
+    if (matchedNames.length > 0) {
+      const labels = selectedAllergens.map(id => {
+        const a = ALLERGENS.find(x => x.id === id);
+        return a ? a.label : id;
+      });
+      alertBar.innerHTML = `🚨 <strong>Personal Alert:</strong> ${matchedNames.length} ingredient${matchedNames.length > 1 ? 's' : ''} matched your allergen profile (${labels.join(', ')}). These are highlighted in <span style="color:var(--personal);font-weight:700;">pink</span> below.`;
+      alertBar.style.display = 'block';
+    } else {
+      alertBar.innerHTML = `✅ <strong>No allergen matches</strong> found for your profile (${selectedAllergens.map(id => { const a = ALLERGENS.find(x => x.id === id); return a ? a.label : id; }).join(', ')}).`;
+      alertBar.style.color = 'var(--safe)';
+      alertBar.style.background = 'rgba(34,197,94,0.08)';
+      alertBar.style.borderColor = 'rgba(34,197,94,0.25)';
+      alertBar.style.display = 'block';
+    }
+  } else {
+    alertBar.style.display = 'none';
+  }
+
   // Ingredient cards
   const list = document.getElementById('ingredients-list');
   list.innerHTML = '';
   (data.ingredients || []).forEach((ing, i) => {
-    list.appendChild(buildIngredientCard(ing, i));
+    list.appendChild(buildIngredientCard(ing, i, selectedAllergens));
   });
+
+  // Recommendations
+  renderRecommendations(data.recommendations);
 
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function buildIngredientCard(ing, idx) {
+function buildIngredientCard(ing, idx, selectedAllergens) {
+  selectedAllergens = selectedAllergens || [];
   const rating = (ing.safety_rating || 'caution').toLowerCase();
   const ratingLabel = { safe: '✅ Safe', caution: '⚠️ Caution', avoid: '❌ Avoid' }[rating] || rating;
   const pillClass   = { safe: 'pill-safe', caution: 'pill-caution', avoid: 'pill-avoid' }[rating] || 'pill-caution';
   const originClass = { natural: 'origin-natural', synthetic: 'origin-synthetic', processed: 'origin-processed' }[(ing.origin||'').toLowerCase()] || 'origin-unknown';
 
-  const card = document.createElement('div');
-  card.className = `ingredient-card ${rating}`;
+  const isPersonalMatch = ingredientMatchesAllergens(ing.allergy_flags, selectedAllergens);
+  const matchedLabels   = isPersonalMatch ? getMatchedAllergenLabels(ing.allergy_flags, selectedAllergens) : [];
 
-  const allergyHTML = (ing.allergy_flags && ing.allergy_flags.length > 0)
-    ? ing.allergy_flags.map(f => `<span class="allergy-flag">${f}</span>`).join('')
-    : '<span class="no-flags">None</span>';
+  const card = document.createElement('div');
+  card.className = `ingredient-card ${rating}${isPersonalMatch ? ' personal-match' : ''}`;
+
+  // Build allergy flags HTML — highlight matched ones
+  let allergyHTML = '';
+  if (ing.allergy_flags && ing.allergy_flags.length > 0) {
+    allergyHTML = ing.allergy_flags.map(f => {
+      // Check if this specific flag matches any selected allergen
+      const flagMatched = selectedAllergens.some(allergenId => {
+        const keywords = ALLERGEN_KEYWORDS[allergenId] || [allergenId];
+        const fLower = f.toLowerCase();
+        return keywords.some(kw => fLower.includes(kw) || kw.includes(fLower));
+      });
+      return `<span class="allergy-flag${flagMatched ? ' matched' : ''}">${escapeHTML(f)}</span>`;
+    }).join('');
+  } else {
+    allergyHTML = '<span class="no-flags">None</span>';
+  }
+
+  // Personal alert badge (shown in header if matched)
+  const personalBadge = isPersonalMatch
+    ? `<span class="personal-alert">🚨 Your Allergen</span>`
+    : '';
 
   card.innerHTML = `
     <div class="ingredient-header" onclick="this.parentElement.classList.toggle('open')">
@@ -732,6 +986,7 @@ function buildIngredientCard(ing, idx) {
         <div class="ingredient-plain">${escapeHTML(ing.plain_english || '')}</div>
       </div>
       <div class="ingredient-right">
+        ${personalBadge}
         <span class="safety-pill ${pillClass}">${ratingLabel}</span>
         <span class="chevron">▼</span>
       </div>
@@ -764,6 +1019,47 @@ function buildIngredientCard(ing, idx) {
     </div>
   `;
   return card;
+}
+
+function renderRecommendations(reco) {
+  const section = document.getElementById('recommendations-section');
+  if (!reco) {
+    section.style.display = 'none';
+    return;
+  }
+
+  // Category badge
+  const catEl = document.getElementById('reco-category');
+  catEl.textContent = reco.product_category || '';
+  catEl.style.display = reco.product_category ? 'inline' : 'none';
+
+  // Alternatives
+  const altEl = document.getElementById('reco-alternatives');
+  altEl.innerHTML = '';
+  const alternatives = Array.isArray(reco.alternatives) ? reco.alternatives : [];
+  alternatives.forEach(alt => {
+    const item = document.createElement('div');
+    item.className = 'reco-item';
+    item.textContent = alt;
+    altEl.appendChild(item);
+  });
+
+  // What to look for
+  document.getElementById('reco-look-for').textContent = reco.what_to_look_for || '';
+
+  // Red flags
+  const rfEl = document.getElementById('reco-red-flags');
+  rfEl.innerHTML = '';
+  const redFlags = Array.isArray(reco.red_flags) ? reco.red_flags : [];
+  redFlags.forEach(rf => {
+    const item = document.createElement('div');
+    item.className = 'reco-item';
+    item.textContent = rf;
+    rfEl.appendChild(item);
+  });
+
+  section.style.display = (alternatives.length > 0 || reco.what_to_look_for || redFlags.length > 0)
+    ? 'block' : 'none';
 }
 
 function escapeHTML(str) {

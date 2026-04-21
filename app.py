@@ -75,6 +75,20 @@ Respond with this exact structure:
     "caution_count": 0,
     "avoid_count": 0,
     "worst_offenders": ["ingredient1", "ingredient2"]
+  },
+  "recommendations": {
+    "product_category": "Short name for this product type (e.g. 'moisturizer', 'breakfast cereal', 'protein shake')",
+    "alternatives": [
+      "Specific, actionable suggestion for a cleaner alternative or brand category — e.g. 'Look for moisturizers with fewer than 5 ingredients and no parabens'",
+      "Another concrete tip — e.g. 'Cereal brands like Bob's Red Mill or Nature's Path tend to use fewer artificial additives'",
+      "A third option if relevant — skip if only 2 apply"
+    ],
+    "what_to_look_for": "2-3 sentences: what positive ingredients or label certifications to seek when buying this type of product",
+    "red_flags": [
+      "Specific ingredient or pattern to avoid for this product category",
+      "Another red flag",
+      "A third if relevant"
+    ]
   }
 }
 
@@ -89,6 +103,8 @@ Letter grade guide:
 - C: Mix of safe and concerning ingredients
 - D: Multiple concerning ingredients
 - F: Dominated by avoid-rated ingredients
+
+For recommendations: be specific and actionable, not generic. Tailor advice to the actual product category you detect from the ingredients.
 
 Be honest, educational, and specific. This helps real people make informed choices."""
 
@@ -178,6 +194,12 @@ def demo_response(ingredient_text: str) -> dict:
             "caution_count": len(demo_ingredients),
             "avoid_count": 0,
             "worst_offenders": []
+        },
+        "recommendations": {
+            "product_category": "Unknown",
+            "alternatives": ["Add an API key to get personalized recommendations"],
+            "what_to_look_for": "Demo mode — add your API key to get real shopping guidance.",
+            "red_flags": ["Demo mode — add your API key for real red flag detection"]
         },
         "_demo": True
     }
