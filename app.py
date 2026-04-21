@@ -79,8 +79,8 @@ Respond with this exact structure:
   "recommendations": {
     "product_category": "Short name for this product type (e.g. 'moisturizer', 'breakfast cereal', 'protein shake')",
     "alternatives": [
-      "Specific, actionable suggestion for a cleaner alternative or brand category — e.g. 'Look for moisturizers with fewer than 5 ingredients and no parabens'",
-      "Another concrete tip — e.g. 'Cereal brands like Bob's Red Mill or Nature's Path tend to use fewer artificial additives'",
+      "Specific, actionable suggestion for a cleaner alternative or brand category",
+      "Another concrete tip",
       "A third option if relevant — skip if only 2 apply"
     ],
     "what_to_look_for": "2-3 sentences: what positive ingredients or label certifications to seek when buying this type of product",
@@ -104,20 +104,55 @@ Letter grade guide:
 - D: Multiple concerning ingredients
 - F: Dominated by avoid-rated ingredients
 
-For recommendations: be specific and actionable, not generic. Tailor advice to the actual product category you detect from the ingredients.
+IMPORTANT — Evaluate ingredients IN CONTEXT of the product type:
+- An ingredient that is "caution" in a food product may be perfectly safe and expected in a cleaning product
+- Preservatives in a baby product deserve more scrutiny than the same preservative in a household cleaner
+- A high alcohol content is expected in hand sanitizer but a red flag in a baby lotion
+- Always apply appropriate safety standards for the product category provided
+
+IMPORTANT — Be balanced and honest:
+- If a product has an excellent ingredient profile, say so clearly and positively. Not every product needs problems invented.
+- If worst_offenders is empty because everything is genuinely safe, leave it as an empty array.
+- Celebrate clean labels — a Grade A product deserves genuine praise, not forced caveats.
+- Only flag real concerns, not theoretical ones at normal usage levels.
+
+For recommendations: be specific and actionable, not generic. Tailor advice to the actual product category.
+If the product context was provided by the user, make the recommendations directly relevant to that category and use case.
 
 Be honest, educational, and specific. This helps real people make informed choices."""
 
 USER_PROMPT_TEMPLATE = """Please analyze these product ingredients:
 
-{ingredients}
+{product_context}{ingredients}
 
 {profile_note}
 
 Analyze every single ingredient listed. Be thorough and honest."""
 
 
-def call_ai(ingredient_text: str, profile: dict = None) -> dict:
+def build_product_context(product_name: str = "", product_category: str = "", product_description: str = "") -> str:
+    """Build a product context block to prepend to the ingredient analysis prompt."""
+    if not any([product_name, product_category, product_description]):
+        return "Note: No product context was provided — please infer the product type from the ingredients themselves.\n\n"
+
+    lines = ["PRODUCT CONTEXT:"]
+    if product_category:
+        lines.append(f"- Category: {product_category}")
+    if product_name:
+        lines.append(f"- Product Name: {product_name}")
+    if product_description:
+        lines.append(f"- Description: {product_description}")
+    lines.append(
+        f"\nAnalyze these ingredients in the context of how they would be used in "
+        f"{'this ' + product_category.lower() + ' product' if product_category else 'this product'}. "
+        f"Apply safety standards appropriate for this category and use case.\n\n"
+    )
+    return "\n".join(lines) + "\n"
+
+
+def call_ai(ingredient_text: str, profile: dict = None,
+            product_name: str = "", product_category: str = "",
+            product_description: str = "") -> dict:
     """Call Claude or OpenAI and return parsed JSON response."""
     profile_note = ""
     if profile:
@@ -129,7 +164,10 @@ def call_ai(ingredient_text: str, profile: dict = None) -> dict:
         if flags:
             profile_note = "PERSONAL PROFILE — flag anything relevant to this user:\n" + "\n".join(flags)
 
+    product_context = build_product_context(product_name, product_category, product_description)
+
     user_msg = USER_PROMPT_TEMPLATE.format(
+        product_context=product_context,
         ingredients=ingredient_text,
         profile_note=profile_note
     )
@@ -234,14 +272,20 @@ def service_worker():
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        ingredient_text = ""
-        profile = {}
+        ingredient_text  = ""
+        profile          = {}
+        product_name     = ""
+        product_category = ""
+        product_description = ""
 
         # Handle JSON body (text paste)
         if request.is_json:
             data = request.get_json()
-            ingredient_text = data.get("ingredients", "").strip()
-            profile = data.get("profile", {})
+            ingredient_text     = data.get("ingredients", "").strip()
+            profile             = data.get("profile", {})
+            product_name        = data.get("product_name", "").strip()
+            product_category    = data.get("product_category", "").strip()
+            product_description = data.get("product_description", "").strip()
 
         # Handle multipart form (file upload)
         elif "file" in request.files:
@@ -256,9 +300,16 @@ def analyze():
                 profile = json.loads(profile_raw)
             except Exception:
                 profile = {}
+            product_name        = request.form.get("product_name", "").strip()
+            product_category    = request.form.get("product_category", "").strip()
+            product_description = request.form.get("product_description", "").strip()
+
         else:
-            ingredient_text = request.form.get("ingredients", "").strip()
-            profile_raw = request.form.get("profile", "{}")
+            ingredient_text     = request.form.get("ingredients", "").strip()
+            profile_raw         = request.form.get("profile", "{}")
+            product_name        = request.form.get("product_name", "").strip()
+            product_category    = request.form.get("product_category", "").strip()
+            product_description = request.form.get("product_description", "").strip()
             try:
                 profile = json.loads(profile_raw)
             except Exception:
@@ -267,7 +318,12 @@ def analyze():
         if not ingredient_text:
             return jsonify({"error": "No ingredient text provided"}), 400
 
-        result = call_ai(ingredient_text, profile)
+        result = call_ai(
+            ingredient_text, profile,
+            product_name=product_name,
+            product_category=product_category,
+            product_description=product_description
+        )
         result["provider"] = AI_PROVIDER
         return jsonify(result)
 

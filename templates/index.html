@@ -112,21 +112,63 @@
     .tab-panel.active { display: block; }
 
     /* ── Form elements ────────────────────────────────── */
-    textarea {
+    textarea, input[type="text"], select {
       width: 100%;
-      min-height: 140px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
       font-size: 0.9rem;
       padding: 0.75rem;
-      resize: vertical;
       font-family: inherit;
       line-height: 1.5;
     }
-    textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
     textarea::placeholder { color: var(--muted); }
+    textarea:focus, input[type="text"]:focus, select:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2.5rem;
+      cursor: pointer;
+    }
+    select option { background: var(--surface2); color: var(--text); }
+    select:invalid, select option[value=""] { color: var(--muted); }
+
+    /* Context field group */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .field-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+    .field-label .optional {
+      font-weight: 400;
+      font-size: 0.72rem;
+      color: var(--border);
+      margin-left: 0.3rem;
+    }
+    .field-label .required-star {
+      color: var(--caution);
+      margin-left: 0.15rem;
+    }
 
     .upload-zone {
       border: 2px dashed var(--border);
@@ -605,6 +647,49 @@
     </div>
   </div>
 
+  <!-- Product Context Card -->
+  <div class="card">
+    <h2>Product Context <span style="font-weight:400;color:var(--muted);font-size:0.72rem;text-transform:none;letter-spacing:0;">— helps AI give more accurate analysis</span></h2>
+    <div class="field-group">
+      <div>
+        <label class="field-label" for="product-name">
+          Product Name <span class="optional">(optional)</span>
+        </label>
+        <input
+          type="text"
+          id="product-name"
+          placeholder="e.g. CeraVe Moisturizing Cream, Orgain Protein Powder..."
+        />
+      </div>
+      <div>
+        <label class="field-label" for="product-category">
+          Product Category <span class="required-star">*</span>
+        </label>
+        <select id="product-category" required>
+          <option value="" disabled selected>Select a category...</option>
+          <option value="Food & Beverage">🍎 Food &amp; Beverage</option>
+          <option value="Supplement & Vitamin">💊 Supplement &amp; Vitamin</option>
+          <option value="Skincare & Beauty">✨ Skincare &amp; Beauty</option>
+          <option value="Hair Care">💇 Hair Care</option>
+          <option value="Baby Product">🍼 Baby Product</option>
+          <option value="Household & Cleaning">🧹 Household &amp; Cleaning</option>
+          <option value="Pet Product">🐾 Pet Product</option>
+          <option value="Other">📦 Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="product-description">
+          Product Description <span class="optional">(optional)</span>
+        </label>
+        <textarea
+          id="product-description"
+          style="min-height: 80px;"
+          placeholder="e.g. daily moisturizer for sensitive skin, protein powder for athletes, baby shampoo..."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
   <!-- Personal Profile Card -->
   <div class="card">
     <h2>My Allergens (optional)</h2>
@@ -713,7 +798,6 @@ ALLERGENS.forEach(a => {
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.value = a.id;
-  // Hidden but still readable via :checked
   checkbox.style.position = 'absolute';
   checkbox.style.opacity = '0';
   checkbox.style.pointerEvents = 'none';
@@ -732,9 +816,16 @@ function getSelectedAllergens() {
     .map(c => c.value);
 }
 
+function getProductContext() {
+  return {
+    product_name:        document.getElementById('product-name').value.trim(),
+    product_category:    document.getElementById('product-category').value,
+    product_description: document.getElementById('product-description').value.trim()
+  };
+}
+
 /**
  * Returns true if an ingredient's allergy_flags array matches any of the user's selected allergens.
- * Uses keyword matching since AI may use different wording.
  */
 function ingredientMatchesAllergens(allergyFlags, selectedAllergens) {
   if (!allergyFlags || allergyFlags.length === 0 || selectedAllergens.length === 0) return false;
@@ -818,6 +909,15 @@ async function analyze() {
   const results   = document.getElementById('results');
   const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
 
+  // Validate category selection
+  const productCtx = getProductContext();
+  if (!productCtx.product_category) {
+    errorBox.textContent = '❌ Please select a product category to help the AI give accurate analysis.';
+    errorBox.style.display = 'block';
+    document.getElementById('product-category').focus();
+    return;
+  }
+
   errorBox.style.display = 'none';
   results.style.display  = 'none';
   loading.style.display  = 'block';
@@ -837,7 +937,10 @@ async function analyze() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ingredients: text,
-          profile: { allergens: activeAllergens }
+          profile: { allergens: activeAllergens },
+          product_name:        productCtx.product_name,
+          product_category:    productCtx.product_category,
+          product_description: productCtx.product_description
         })
       });
       data = await resp.json();
@@ -848,6 +951,9 @@ async function analyze() {
       const form = new FormData();
       form.append('file', selectedFile);
       form.append('profile', JSON.stringify({ allergens: activeAllergens }));
+      form.append('product_name',        productCtx.product_name);
+      form.append('product_category',    productCtx.product_category);
+      form.append('product_description', productCtx.product_description);
       const resp = await fetch('/analyze', { method: 'POST', body: form });
       data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Analysis failed');
@@ -907,7 +1013,6 @@ function renderResults(data, selectedAllergens) {
   // Personal allergen alert bar
   const alertBar = document.getElementById('personal-alert-bar');
   if (selectedAllergens.length > 0) {
-    // Find all ingredients that match
     const matchedNames = [];
     (data.ingredients || []).forEach(ing => {
       if (ingredientMatchesAllergens(ing.allergy_flags, selectedAllergens)) {
@@ -958,11 +1063,9 @@ function buildIngredientCard(ing, idx, selectedAllergens) {
   const card = document.createElement('div');
   card.className = `ingredient-card ${rating}${isPersonalMatch ? ' personal-match' : ''}`;
 
-  // Build allergy flags HTML — highlight matched ones
   let allergyHTML = '';
   if (ing.allergy_flags && ing.allergy_flags.length > 0) {
     allergyHTML = ing.allergy_flags.map(f => {
-      // Check if this specific flag matches any selected allergen
       const flagMatched = selectedAllergens.some(allergenId => {
         const keywords = ALLERGEN_KEYWORDS[allergenId] || [allergenId];
         const fLower = f.toLowerCase();
@@ -974,7 +1077,6 @@ function buildIngredientCard(ing, idx, selectedAllergens) {
     allergyHTML = '<span class="no-flags">None</span>';
   }
 
-  // Personal alert badge (shown in header if matched)
   const personalBadge = isPersonalMatch
     ? `<span class="personal-alert">🚨 Your Allergen</span>`
     : '';
