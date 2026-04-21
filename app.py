@@ -65,7 +65,9 @@ Respond with this exact structure:
       "origin": "natural|synthetic|processed",
       "allergy_flags": ["list", "of", "allergens", "or", "empty"],
       "benefits": "Legitimate benefits or positive effects",
-      "concerns": "Known concerns, side effects, or 'None known at normal doses'"
+      "concerns": "Known concerns, side effects, or 'None known at normal doses'",
+      "dosage_assessment": "safe_range|above_rda_below_ul|exceeds_ul|not_specified",
+      "dosage_context": "Plain English explanation of the dosage — only include this field when an amount is explicitly stated"
     }
   ],
   "summary": {
@@ -103,6 +105,15 @@ Letter grade guide:
 - C: Mix of safe and concerning ingredients
 - D: Multiple concerning ingredients
 - F: Dominated by avoid-rated ingredients
+
+DOSAGE ANALYSIS — when ingredient amounts are listed (e.g. Vitamin C 750mg, Sodium 400mg):
+1. Compare against established safe limits (RDA, Tolerable Upper Limit from NIH/FDA/EFSA)
+2. Set dosage_assessment to one of: safe_range / above_rda_below_ul / exceeds_ul / not_specified
+3. Set dosage_context to a plain English explanation, e.g. "750mg Vitamin C is within the safe range. The tolerable upper limit for adults is 2000mg/day."
+4. For supplements: note if it is a therapeutic dose vs maintenance dose
+5. For food additives: note what percentage of daily recommended intake this represents
+6. If no amount is listed for an ingredient, set dosage_assessment to not_specified and omit the dosage_context field entirely
+7. Never invent amounts — only analyze what is explicitly stated in the ingredient list
 
 IMPORTANT — Evaluate ingredients IN CONTEXT of the product type:
 - An ingredient that is "caution" in a food product may be perfectly safe and expected in a cleaning product
@@ -230,7 +241,8 @@ def demo_response(ingredient_text: str) -> dict:
             "origin": "unknown",
             "allergy_flags": [],
             "benefits": "Analysis unavailable in demo mode",
-            "concerns": "Add ANTHROPIC_API_KEY or OPENAI_API_KEY to get real analysis"
+            "concerns": "Add ANTHROPIC_API_KEY or OPENAI_API_KEY to get real analysis",
+            "dosage_assessment": "not_specified"
         })
     return {
         "ingredients": demo_ingredients,

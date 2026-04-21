@@ -285,7 +285,6 @@
       flex-shrink: 0;
       border: 3px solid;
     }
-    /* FIX 4: Grade colors — A=green, B=light green, C=yellow, D=orange, F=red */
     .grade-A { color: #22c55e; border-color: #22c55e; background: rgba(34,197,94,0.1); }
     .grade-B { color: #86efac; border-color: #86efac; background: rgba(134,239,172,0.1); }
     .grade-C { color: #fde047; border-color: #fde047; background: rgba(253,224,71,0.1); }
@@ -370,7 +369,6 @@
       overflow: hidden;
       transition: border-color 0.15s;
     }
-    /* FIX 4: Ingredient card left border — consistent with exact hex values */
     .ingredient-card.safe    { border-left: 3px solid #22c55e; }
     .ingredient-card.caution { border-left: 3px solid #f59e0b; }
     .ingredient-card.avoid   { border-left: 3px solid #ef4444; }
@@ -416,7 +414,6 @@
       padding: 0.25rem 0.6rem;
       border-radius: 20px;
     }
-    /* FIX 4: Safety pills — standardized exact hex values */
     .pill-safe    { background: rgba(34,197,94,0.15);  color: #22c55e; }
     .pill-caution { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .pill-avoid   { background: rgba(239,68,68,0.15);  color: #ef4444; }
@@ -481,6 +478,36 @@
       font-weight: 700;
     }
     .no-flags { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Dosage context info row ──────────────────────── */
+    .dosage-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      background: rgba(56, 189, 248, 0.07);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #7dd3fc;
+      line-height: 1.5;
+    }
+    .dosage-info .dosage-icon {
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      margin-top: 0.05rem;
+    }
+    .dosage-info.exceeds-ul {
+      background: rgba(239, 68, 68, 0.07);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+    }
+    .dosage-info.above-rda {
+      background: rgba(245, 158, 11, 0.07);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: #fcd34d;
+    }
 
     /* ── Recommendations section ──────────────────────── */
     #recommendations-section {
@@ -624,7 +651,7 @@
 
 <main>
 
-  <!-- FIX 1: Product Context Card FIRST — helps AI before ingredients are entered -->
+  <!-- Product Context Card FIRST — helps AI before ingredients are entered -->
   <div class="card">
     <h2>Product Context <span style="font-weight:400;color:var(--muted);font-size:0.72rem;text-transform:none;letter-spacing:0;">— helps AI give more accurate analysis</span></h2>
     <div class="field-group">
@@ -667,7 +694,7 @@
     </div>
   </div>
 
-  <!-- FIX 1: Ingredient Input Card SECOND -->
+  <!-- Ingredient Input Card -->
   <div class="card">
     <h2>Analyze Ingredients</h2>
     <div class="tabs">
@@ -678,7 +705,7 @@
     <div id="tab-text" class="tab-panel active">
       <textarea
         id="ingredient-text"
-        placeholder="Paste ingredient list here...&#10;&#10;e.g. Water, Sugar, Citric Acid, Natural Flavors, Sodium Benzoate..."
+        placeholder="Paste ingredient list here...&#10;&#10;e.g. Water, Sugar, Citric Acid, Natural Flavors, Sodium Benzoate...&#10;&#10;Tip: Include amounts when listed (e.g. Vitamin C 500mg) for dosage analysis."
       ></textarea>
     </div>
 
@@ -787,7 +814,6 @@ const ALLERGENS = [
   { id: 'vegan',     label: '🌱 Vegan',    keywords: ['animal', 'meat', 'gelatin', 'carmine', 'lard', 'tallow', 'collagen'] },
 ];
 
-// Build allergen keyword map: { allergenId -> [keywords] }
 const ALLERGEN_KEYWORDS = {};
 ALLERGENS.forEach(a => { ALLERGEN_KEYWORDS[a.id] = a.keywords; });
 
@@ -826,9 +852,6 @@ function getProductContext() {
   };
 }
 
-/**
- * Returns true if an ingredient's allergy_flags array matches any of the user's selected allergens.
- */
 function ingredientMatchesAllergens(allergyFlags, selectedAllergens) {
   if (!allergyFlags || allergyFlags.length === 0 || selectedAllergens.length === 0) return false;
   const flagsLower = allergyFlags.map(f => f.toLowerCase());
@@ -843,9 +866,6 @@ function ingredientMatchesAllergens(allergyFlags, selectedAllergens) {
   return false;
 }
 
-/**
- * Returns matched allergen labels for a given ingredient.
- */
 function getMatchedAllergenLabels(allergyFlags, selectedAllergens) {
   if (!allergyFlags || allergyFlags.length === 0 || selectedAllergens.length === 0) return [];
   const flagsLower = allergyFlags.map(f => f.toLowerCase());
@@ -901,7 +921,6 @@ function handleFile(file) {
 // ── Analyze ────────────────────────────────────────────────────────────────
 document.getElementById('analyze-btn').addEventListener('click', analyze);
 
-// Track selected allergens at time of analysis for highlighting
 let activeAllergens = [];
 
 async function analyze() {
@@ -911,7 +930,6 @@ async function analyze() {
   const results   = document.getElementById('results');
   const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
 
-  // Validate category selection
   const productCtx = getProductContext();
   if (!productCtx.product_category) {
     errorBox.textContent = '❌ Please select a product category to help the AI give accurate analysis.';
@@ -925,7 +943,6 @@ async function analyze() {
   loading.style.display  = 'block';
   btn.disabled = true;
 
-  // Capture allergens at time of submit
   activeAllergens = getSelectedAllergens();
 
   try {
@@ -978,10 +995,8 @@ function renderResults(data, selectedAllergens) {
   const results = document.getElementById('results');
   results.style.display = 'block';
 
-  // Demo banner
   document.getElementById('demo-banner').style.display = data._demo ? 'block' : 'none';
 
-  // Grade
   const summary = data.summary || {};
   const grade   = summary.letter_grade || '?';
   const circle  = document.getElementById('grade-circle');
@@ -989,14 +1004,12 @@ function renderResults(data, selectedAllergens) {
   circle.className   = 'grade-circle grade-' + (grade === '?' ? 'x' : grade);
   document.getElementById('bottom-line').textContent = summary.bottom_line || '';
 
-  // Counts
   const countRow = document.getElementById('count-row');
   countRow.innerHTML = '';
   if (summary.safe_count)    countRow.innerHTML += `<span class="count-badge count-safe">✅ ${summary.safe_count} safe</span>`;
   if (summary.caution_count) countRow.innerHTML += `<span class="count-badge count-caution">⚠️ ${summary.caution_count} caution</span>`;
   if (summary.avoid_count)   countRow.innerHTML += `<span class="count-badge count-avoid">❌ ${summary.avoid_count} avoid</span>`;
 
-  // Worst offenders
   const offendersCard = document.getElementById('offenders-card');
   const offendersList = document.getElementById('offenders-list');
   offendersList.innerHTML = '';
@@ -1012,7 +1025,6 @@ function renderResults(data, selectedAllergens) {
     offendersCard.style.display = 'none';
   }
 
-  // Personal allergen alert bar
   const alertBar = document.getElementById('personal-alert-bar');
   if (selectedAllergens.length > 0) {
     const matchedNames = [];
@@ -1039,14 +1051,12 @@ function renderResults(data, selectedAllergens) {
     alertBar.style.display = 'none';
   }
 
-  // Ingredient cards
   const list = document.getElementById('ingredients-list');
   list.innerHTML = '';
   (data.ingredients || []).forEach((ing, i) => {
     list.appendChild(buildIngredientCard(ing, i, selectedAllergens));
   });
 
-  // Recommendations
   renderRecommendations(data.recommendations);
 
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1060,7 +1070,6 @@ function buildIngredientCard(ing, idx, selectedAllergens) {
   const originClass = { natural: 'origin-natural', synthetic: 'origin-synthetic', processed: 'origin-processed' }[(ing.origin||'').toLowerCase()] || 'origin-unknown';
 
   const isPersonalMatch = ingredientMatchesAllergens(ing.allergy_flags, selectedAllergens);
-  const matchedLabels   = isPersonalMatch ? getMatchedAllergenLabels(ing.allergy_flags, selectedAllergens) : [];
 
   const card = document.createElement('div');
   card.className = `ingredient-card ${rating}${isPersonalMatch ? ' personal-match' : ''}`;
@@ -1082,6 +1091,20 @@ function buildIngredientCard(ing, idx, selectedAllergens) {
   const personalBadge = isPersonalMatch
     ? `<span class="personal-alert">🚨 Your Allergen</span>`
     : '';
+
+  // Build dosage info row if dosage_context is present
+  let dosageHTML = '';
+  if (ing.dosage_context) {
+    const assessment = (ing.dosage_assessment || '').toLowerCase();
+    let dosageClass = '';
+    if (assessment === 'exceeds_ul') dosageClass = ' exceeds-ul';
+    else if (assessment === 'above_rda_below_ul') dosageClass = ' above-rda';
+    dosageHTML = `
+      <div class="dosage-info${dosageClass}">
+        <span class="dosage-icon">ℹ️</span>
+        <span>${escapeHTML(ing.dosage_context)}</span>
+      </div>`;
+  }
 
   card.innerHTML = `
     <div class="ingredient-header" onclick="this.parentElement.classList.toggle('open')">
@@ -1120,6 +1143,7 @@ function buildIngredientCard(ing, idx, selectedAllergens) {
           <div class="allergy-flags">${allergyHTML}</div>
         </div>
       </div>
+      ${dosageHTML}
     </div>
   `;
   return card;
@@ -1132,12 +1156,10 @@ function renderRecommendations(reco) {
     return;
   }
 
-  // Category badge
   const catEl = document.getElementById('reco-category');
   catEl.textContent = reco.product_category || '';
   catEl.style.display = reco.product_category ? 'inline' : 'none';
 
-  // Alternatives
   const altEl = document.getElementById('reco-alternatives');
   altEl.innerHTML = '';
   const alternatives = Array.isArray(reco.alternatives) ? reco.alternatives : [];
@@ -1148,10 +1170,8 @@ function renderRecommendations(reco) {
     altEl.appendChild(item);
   });
 
-  // What to look for
   document.getElementById('reco-look-for').textContent = reco.what_to_look_for || '';
 
-  // Red flags
   const rfEl = document.getElementById('reco-red-flags');
   rfEl.innerHTML = '';
   const redFlags = Array.isArray(reco.red_flags) ? reco.red_flags : [];
