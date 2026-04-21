@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="AI-powered ingredient education. Know what's in your products." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ClearLabel — Know Your Ingredients</title>
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    /* ── Reset & base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --surface2: #273449;
+      --border:   #334155;
+      --text:     #f1f5f9;
+      --muted:    #94a3b8;
+      --accent:   #38bdf8;
+      --safe:     #22c55e;
+      --caution:  #f59e0b;
+      --avoid:    #ef4444;
+      --radius:   12px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    header {
+      padding: 1.5rem 1.25rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+    }
+    .logo h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+    .logo h1 span { color: var(--accent); }
+    header p { color: var(--muted); font-size: 0.875rem; }
+
+    /* ── Main layout ──────────────────────────────────── */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    /* ── Section cards ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Tabs ─────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Form elements ────────────────────────────────── */
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 0.75rem;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    textarea::placeholder { color: var(--muted); }
+
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(56,189,248,0.05);
+    }
+    .upload-zone p { color: var(--muted); font-size: 0.875rem; margin-top: 0.5rem; }
+    #file-input { display: none; }
+    #file-preview {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    /* ── Profile section ──────────────────────────────── */
+    .profile-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .allergen-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .allergen-chip input { display: none; }
+    .allergen-chip.selected {
+      background: rgba(239,68,68,0.15);
+      border-color: var(--avoid);
+      color: var(--avoid);
+    }
+
+    /* ── Analyze button ───────────────────────────────── */
+    #analyze-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-bottom: 1.25rem;
+    }
+    #analyze-btn:hover { opacity: 0.9; }
+    #analyze-btn:active { transform: scale(0.98); }
+    #analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Loading ──────────────────────────────────────── */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ────────────────────────────────────────── */
+    #error-box {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid var(--avoid);
+      border-radius: var(--radius);
+      padding: 1rem;
+      color: var(--avoid);
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    /* ── Results ──────────────────────────────────────── */
+    #results { display: none; }
+
+    /* Grade card */
+    .grade-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .grade-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800;
+      flex-shrink: 0;
+      border: 3px solid;
+    }
+    .grade-A { color: var(--safe);    border-color: var(--safe);    background: rgba(34,197,94,0.1); }
+    .grade-B { color: #86efac;        border-color: #86efac;        background: rgba(134,239,172,0.1); }
+    .grade-C { color: var(--caution); border-color: var(--caution); background: rgba(245,158,11,0.1); }
+    .grade-D { color: #fb923c;        border-color: #fb923c;        background: rgba(251,146,60,0.1); }
+    .grade-F { color: var(--avoid);   border-color: var(--avoid);   background: rgba(239,68,68,0.1); }
+    .grade-x { color: var(--muted);   border-color: var(--muted);   background: rgba(148,163,184,0.1); }
+
+    .grade-info h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .grade-info p  { font-size: 0.875rem; color: var(--muted); line-height: 1.5; }
+
+    .count-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .count-badge {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+    }
+    .count-safe    { background: rgba(34,197,94,0.15);   color: var(--safe); }
+    .count-caution { background: rgba(245,158,11,0.15);  color: var(--caution); }
+    .count-avoid   { background: rgba(239,68,68,0.15);   color: var(--avoid); }
+
+    /* Worst offenders */
+    .offenders-card {
+      background: rgba(239,68,68,0.05);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .offenders-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--avoid);
+      margin-bottom: 0.6rem;
+    }
+    .offenders-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .offender-tag {
+      background: rgba(239,68,68,0.12);
+      color: var(--avoid);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 20px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Ingredient list */
+    #ingredients-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .ingredient-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .ingredient-card.safe    { border-left: 3px solid var(--safe); }
+    .ingredient-card.caution { border-left: 3px solid var(--caution); }
+    .ingredient-card.avoid   { border-left: 3px solid var(--avoid); }
+
+    .ingredient-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      gap: 0.75rem;
+    }
+    .ingredient-header:hover { background: var(--surface2); }
+
+    .ingredient-left { flex: 1; min-width: 0; }
+    .ingredient-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ingredient-plain {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ingredient-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .safety-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+    }
+    .pill-safe    { background: rgba(34,197,94,0.15);   color: var(--safe); }
+    .pill-caution { background: rgba(245,158,11,0.15);  color: var(--caution); }
+    .pill-avoid   { background: rgba(239,68,68,0.15);   color: var(--avoid); }
+
+    .chevron {
+      color: var(--muted);
+      transition: transform 0.2s;
+      font-size: 0.75rem;
+    }
+    .ingredient-card.open .chevron { transform: rotate(180deg); }
+
+    .ingredient-body {
+      display: none;
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .ingredient-card.open .ingredient-body { display: block; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 480px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    .detail-item { }
+    .detail-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .detail-value { font-size: 0.85rem; line-height: 1.5; }
+
+    .origin-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .origin-natural   { background: rgba(34,197,94,0.12);  color: var(--safe); }
+    .origin-synthetic { background: rgba(239,68,68,0.12);  color: var(--avoid); }
+    .origin-processed { background: rgba(245,158,11,0.12); color: var(--caution); }
+    .origin-unknown   { background: rgba(148,163,184,0.1); color: var(--muted); }
+
+    .allergy-flags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
+    .allergy-flag {
+      font-size: 0.72rem;
+      background: rgba(239,68,68,0.1);
+      color: var(--avoid);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 20px;
+      padding: 0.1rem 0.45rem;
+    }
+    .no-flags { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Demo banner ──────────────────────────────────── */
+    .demo-banner {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      color: var(--caution);
+    }
+
+    /* ── Install prompt ───────────────────────────────── */
+    #install-prompt {
+      display: none;
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.25rem;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      z-index: 100;
+      max-width: calc(100% - 2rem);
+    }
+    #install-prompt p { font-size: 0.875rem; flex: 1; }
+    #install-prompt button {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #install-close {
+      background: none !important;
+      color: var(--muted) !important;
+      font-size: 1.2rem !important;
+      padding: 0.2rem !important;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔬</div>
+    <h1>Clear<span>Label</span></h1>
+  </div>
+  <p>Know what's actually in your products</p>
+</header>
+
+<main>
+
+  <!-- Input Card -->
+  <div class="card">
+    <h2>Analyze Ingredients</h2>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="text">📝 Paste Text</button>
+      <button class="tab-btn" data-tab="photo">📷 Upload Photo</button>
+    </div>
+
+    <div id="tab-text" class="tab-panel active">
+      <textarea
+        id="ingredient-text"
+        placeholder="Paste ingredient list here...&#10;&#10;e.g. Water, Sugar, Citric Acid, Natural Flavors, Sodium Benzoate..."
+      ></textarea>
+    </div>
+
+    <div id="tab-photo" class="tab-panel">
+      <div class="upload-zone" id="upload-zone">
+        <div style="font-size: 2.5rem;">📸</div>
+        <p>Tap to upload a photo of the ingredient label</p>
+        <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
+        <input type="file" id="file-input" accept="image/*" capture="environment" />
+      </div>
+      <div id="file-preview"></div>
+    </div>
+  </div>
+
+  <!-- Personal Profile Card -->
+  <div class="card">
+    <h2>My Allergens (optional)</h2>
+    <div class="profile-grid" id="allergen-grid">
+      <!-- chips injected by JS -->
+    </div>
+  </div>
+
+  <button id="analyze-btn">🔍 Analyze Ingredients</button>
+
+  <div id="error-box"></div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Analyzing ingredients with AI...</p>
+    <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--muted);">This takes 5–15 seconds</p>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div id="demo-banner" style="display:none;" class="demo-banner">
+      ⚠️ Demo mode — no API key configured. Results are placeholders.
+    </div>
+
+    <!-- Grade card -->
+    <div class="grade-card">
+      <div class="grade-circle" id="grade-circle">?</div>
+      <div class="grade-info">
+        <h3>Overall Assessment</h3>
+        <p id="bottom-line"></p>
+        <div class="count-row" id="count-row"></div>
+      </div>
+    </div>
+
+    <!-- Worst offenders -->
+    <div class="offenders-card" id="offenders-card" style="display:none;">
+      <h3>⚠️ Watch Out For</h3>
+      <div class="offenders-list" id="offenders-list"></div>
+    </div>
+
+    <!-- Ingredient cards -->
+    <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem; font-weight:600;">
+      Ingredient Breakdown
+    </div>
+    <div id="ingredients-list"></div>
+  </div>
+
+</main>
+
+<!-- Install prompt -->
+<div id="install-prompt">
+  <p>📲 Add ClearLabel to your home screen</p>
+  <button id="install-btn">Install</button>
+  <button id="install-close">✕</button>
+</div>
+
+<script>
+// ── Allergen chips ─────────────────────────────────────────────────────────
+const ALLERGENS = [
+  { id: 'nuts',      label: '🥜 Nuts' },
+  { id: 'dairy',     label: '🥛 Dairy' },
+  { id: 'gluten',    label: '🌾 Gluten' },
+  { id: 'soy',       label: '🫘 Soy' },
+  { id: 'eggs',      label: '🥚 Eggs' },
+  { id: 'shellfish', label: '🦐 Shellfish' },
+  { id: 'fish',      label: '🐟 Fish' },
+  { id: 'sesame',    label: '🌿 Sesame' },
+  { id: 'vegan',     label: '🌱 Vegan' },
+];
+
+const grid = document.getElementById('allergen-grid');
+ALLERGENS.forEach(a => {
+  const chip = document.createElement('label');
+  chip.className = 'allergen-chip';
+  chip.dataset.id = a.id;
+  chip.innerHTML = `<input type="checkbox" value="${a.id}" />${a.label}`;
+  chip.addEventListener('click', () => chip.classList.toggle('selected'));
+  grid.appendChild(chip);
+});
+
+function getSelectedAllergens() {
+  return [...document.querySelectorAll('.allergen-chip.selected')]
+    .map(c => c.dataset.id);
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── File upload ────────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('upload-zone');
+const fileInput  = document.getElementById('file-input');
+let selectedFile = null;
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+  selectedFile = file;
+  document.getElementById('file-preview').textContent = `✅ ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+}
+
+// ── Analyze ────────────────────────────────────────────────────────────────
+document.getElementById('analyze-btn').addEventListener('click', analyze);
+
+async function analyze() {
+  const btn       = document.getElementById('analyze-btn');
+  const loading   = document.getElementById('loading');
+  const errorBox  = document.getElementById('error-box');
+  const results   = document.getElementById('results');
+  const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+
+  errorBox.style.display = 'none';
+  results.style.display  = 'none';
+  loading.style.display  = 'block';
+  btn.disabled = true;
+
+  try {
+    let data;
+
+    if (activeTab === 'text') {
+      const text = document.getElementById('ingredient-text').value.trim();
+      if (!text) throw new Error('Please paste an ingredient list first');
+      const resp = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ingredients: text,
+          profile: { allergens: getSelectedAllergens() }
+        })
+      });
+      data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Analysis failed');
+
+    } else {
+      if (!selectedFile) throw new Error('Please select an image first');
+      const form = new FormData();
+      form.append('file', selectedFile);
+      form.append('profile', JSON.stringify({ allergens: getSelectedAllergens() }));
+      const resp = await fetch('/analyze', { method: 'POST', body: form });
+      data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Analysis failed');
+    }
+
+    renderResults(data);
+
+  } catch (err) {
+    errorBox.textContent = '❌ ' + err.message;
+    errorBox.style.display = 'block';
+  } finally {
+    loading.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults(data) {
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+
+  // Demo banner
+  document.getElementById('demo-banner').style.display = data._demo ? 'block' : 'none';
+
+  // Grade
+  const summary = data.summary || {};
+  const grade   = summary.letter_grade || '?';
+  const circle  = document.getElementById('grade-circle');
+  circle.textContent = grade;
+  circle.className   = 'grade-circle grade-' + (grade === '?' ? 'x' : grade);
+  document.getElementById('bottom-line').textContent = summary.bottom_line || '';
+
+  // Counts
+  const countRow = document.getElementById('count-row');
+  countRow.innerHTML = '';
+  if (summary.safe_count)    countRow.innerHTML += `<span class="count-badge count-safe">✅ ${summary.safe_count} safe</span>`;
+  if (summary.caution_count) countRow.innerHTML += `<span class="count-badge count-caution">⚠️ ${summary.caution_count} caution</span>`;
+  if (summary.avoid_count)   countRow.innerHTML += `<span class="count-badge count-avoid">❌ ${summary.avoid_count} avoid</span>`;
+
+  // Worst offenders
+  const offendersCard = document.getElementById('offenders-card');
+  const offendersList = document.getElementById('offenders-list');
+  offendersList.innerHTML = '';
+  if (summary.worst_offenders && summary.worst_offenders.length > 0) {
+    offendersCard.style.display = 'block';
+    summary.worst_offenders.forEach(o => {
+      const tag = document.createElement('span');
+      tag.className = 'offender-tag';
+      tag.textContent = o;
+      offendersList.appendChild(tag);
+    });
+  } else {
+    offendersCard.style.display = 'none';
+  }
+
+  // Ingredient cards
+  const list = document.getElementById('ingredients-list');
+  list.innerHTML = '';
+  (data.ingredients || []).forEach((ing, i) => {
+    list.appendChild(buildIngredientCard(ing, i));
+  });
+
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildIngredientCard(ing, idx) {
+  const rating = (ing.safety_rating || 'caution').toLowerCase();
+  const ratingLabel = { safe: '✅ Safe', caution: '⚠️ Caution', avoid: '❌ Avoid' }[rating] || rating;
+  const pillClass   = { safe: 'pill-safe', caution: 'pill-caution', avoid: 'pill-avoid' }[rating] || 'pill-caution';
+  const originClass = { natural: 'origin-natural', synthetic: 'origin-synthetic', processed: 'origin-processed' }[(ing.origin||'').toLowerCase()] || 'origin-unknown';
+
+  const card = document.createElement('div');
+  card.className = `ingredient-card ${rating}`;
+
+  const allergyHTML = (ing.allergy_flags && ing.allergy_flags.length > 0)
+    ? ing.allergy_flags.map(f => `<span class="allergy-flag">${f}</span>`).join('')
+    : '<span class="no-flags">None</span>';
+
+  card.innerHTML = `
+    <div class="ingredient-header" onclick="this.parentElement.classList.toggle('open')">
+      <div class="ingredient-left">
+        <div class="ingredient-name">${escapeHTML(ing.name || 'Unknown')}</div>
+        <div class="ingredient-plain">${escapeHTML(ing.plain_english || '')}</div>
+      </div>
+      <div class="ingredient-right">
+        <span class="safety-pill ${pillClass}">${ratingLabel}</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="ingredient-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Function</div>
+          <div class="detail-value">${escapeHTML(ing.function || '—')}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Origin</div>
+          <div class="detail-value">
+            <span class="origin-badge ${originClass}">${escapeHTML(ing.origin || 'Unknown')}</span>
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Benefits</div>
+          <div class="detail-value">${escapeHTML(ing.benefits || '—')}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Concerns</div>
+          <div class="detail-value">${escapeHTML(ing.concerns || '—')}</div>
+        </div>
+        <div class="detail-item" style="grid-column: 1 / -1;">
+          <div class="detail-label">Allergy Flags</div>
+          <div class="allergy-flags">${allergyHTML}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── PWA Install prompt ─────────────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const prompt = document.getElementById('install-prompt');
+  prompt.style.display = 'flex';
+});
+
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  }
+  document.getElementById('install-prompt').style.display = 'none';
+});
+document.getElementById('install-close').addEventListener('click', () => {
+  document.getElementById('install-prompt').style.display = 'none';
+});
+
+// ── Service Worker ─────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
