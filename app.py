@@ -110,13 +110,14 @@ IMPORTANT — Evaluate ingredients IN CONTEXT of the product type:
 - A high alcohol content is expected in hand sanitizer but a red flag in a baby lotion
 - Always apply appropriate safety standards for the product category provided
 
-IMPORTANT — Be precise and accurate about the NATURE of concerns:
-- Do not conflate separate issues. Example: "Octocrylene has coral tissue damage concerns" is a DIFFERENT issue from "Octocrylene is banned in Hawaii" (Hawaii's reef-safe laws target oxybenzone and octinoxate, NOT octocrylene).
-- Do not mention reef-safe legislation or Hawaii bans for octocrylene — this is factually incorrect.
-- State exactly what the concern IS: e.g. "may disrupt coral reproduction and contribute to coral bleaching" vs "banned under Hawaii reef-safe sunscreen laws."
-- Do not generalize or extrapolate concerns from one ingredient to another. Be specific to each ingredient.
-- Do not mention regulatory bans or restrictions unless they are factually accurate for that specific ingredient.
-- If an ingredient's concern is environmental (e.g. coral tissue damage), say so precisely — do not substitute or combine it with a legal/legislative framing.
+ACCURACY RULES — follow these strictly:
+1. Each concern must be sourced from the ingredient itself, not inferred from context. Do not let product category, environmental claims, or nearby ingredients influence what you report about a specific ingredient.
+2. Distinguish between separate issues clearly. Examples:
+   - Coral TISSUE damage (ingredient disrupts coral biology/reproduction) is NOT the same as reef-safe legislation (legal bans in specific locations like Hawaii)
+   - Octocrylene causes coral tissue damage via photodegradation into benzophenone — do NOT conflate this with Hawaii reef-safe sunscreen laws, which ban oxybenzone and octinoxate, not octocrylene
+3. Never extrapolate. If an ingredient has concern A, do not assume concern B just because they sound related.
+4. If the product is described as eco-friendly or the user mentions environmental concerns, do NOT retroactively change ingredient assessments to match that framing. Each ingredient stands on its own scientific evidence.
+5. Cite the actual mechanism of concern (e.g. photodegrades into benzophenone, disrupts hormone receptors, irritates mucous membranes) not vague associations.
 
 IMPORTANT — Be balanced and honest:
 - If a product has an excellent ingredient profile, say so clearly and positively. Not every product needs problems invented.
