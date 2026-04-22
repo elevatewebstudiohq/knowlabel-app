@@ -1,9 +1,10 @@
 """
-ClearLabel — AI Ingredient Education PWA
+KnowLabel — AI Ingredient Education PWA
 Backend: Flask + Claude/OpenAI API
 """
 
 import os
+import sys
 import json
 import base64
 import logging
@@ -11,14 +12,23 @@ from pathlib import Path
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 # ── AI client setup ─────────────────────────────────────────────────────────
-SECRETS_PATH = Path("/home/node/.openclaw/workspace/automation/secrets.json")
-secrets = {}
-if SECRETS_PATH.exists():
-    with open(SECRETS_PATH) as f:
-        secrets = json.load(f)
+# Try environment variable first (Railway / production), fall back to secrets.json for local dev
+ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
+OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")
 
-ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY") or secrets.get("anthropic_api_key") or secrets.get("anthropic")
-OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")    or secrets.get("openai_api_key")
+if not ANTHROPIC_KEY and not OPENAI_KEY:
+    SECRETS_PATH = Path("/home/node/.openclaw/workspace/automation/secrets.json")
+    if SECRETS_PATH.exists():
+        with open(SECRETS_PATH) as f:
+            secrets = json.load(f)
+        ANTHROPIC_KEY = secrets.get("anthropic_api_key") or secrets.get("anthropic")
+        OPENAI_KEY    = secrets.get("openai_api_key")
+
+if not ANTHROPIC_KEY and not OPENAI_KEY:
+    print("❌ ERROR: No AI API key found.")
+    print("   Set ANTHROPIC_API_KEY (or OPENAI_API_KEY) as an environment variable,")
+    print("   or add it to /home/node/.openclaw/workspace/automation/secrets.json.")
+    sys.exit(1)
 
 AI_PROVIDER = "none"
 client = None
@@ -33,8 +43,6 @@ elif OPENAI_KEY:
     client = OpenAI(api_key=OPENAI_KEY)
     AI_PROVIDER = "openai"
     print("✅ Using GPT-4o (OpenAI) — add Anthropic key to switch to Claude")
-else:
-    print("⚠️  No AI key found — /analyze will return demo data")
 
 # ── OCR setup ────────────────────────────────────────────────────────────────
 try:
@@ -49,7 +57,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # ── System prompt ─────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are ClearLabel, an expert ingredient analyst and consumer advocate.
+SYSTEM_PROMPT = """You are KnowLabel, an expert ingredient analyst and consumer advocate.
 Your job is to analyze product ingredient lists and explain every ingredient in plain English.
 
 You MUST respond with valid JSON only — no markdown, no explanation outside the JSON.
@@ -213,10 +221,6 @@ def call_ai(ingredient_text: str, profile: dict = None,
         )
         raw = response.choices[0].message.content
 
-    else:
-        # Demo mode — no API key
-        return demo_response(ingredient_text)
-
     # Strip markdown code fences if present
     raw = raw.strip()
     if raw.startswith("```"):
@@ -226,42 +230,6 @@ def call_ai(ingredient_text: str, profile: dict = None,
     raw = raw.strip()
 
     return json.loads(raw)
-
-
-def demo_response(ingredient_text: str) -> dict:
-    """Return a demo response when no API key is configured."""
-    ingredients = [i.strip() for i in ingredient_text.replace(",", "\n").split("\n") if i.strip()]
-    demo_ingredients = []
-    for ing in ingredients[:5]:  # limit demo to 5
-        demo_ingredients.append({
-            "name": ing,
-            "plain_english": f"Demo mode — add an API key to analyze {ing}",
-            "function": "Unknown (demo mode)",
-            "safety_rating": "caution",
-            "origin": "unknown",
-            "allergy_flags": [],
-            "benefits": "Analysis unavailable in demo mode",
-            "concerns": "Add ANTHROPIC_API_KEY or OPENAI_API_KEY to get real analysis",
-            "dosage_assessment": "not_specified"
-        })
-    return {
-        "ingredients": demo_ingredients,
-        "summary": {
-            "letter_grade": "?",
-            "bottom_line": "Demo mode — no API key configured. Add your API key to secrets.json to get real ingredient analysis.",
-            "safe_count": 0,
-            "caution_count": len(demo_ingredients),
-            "avoid_count": 0,
-            "worst_offenders": []
-        },
-        "recommendations": {
-            "product_category": "Unknown",
-            "alternatives": ["Add an API key to get personalized recommendations"],
-            "what_to_look_for": "Demo mode — add your API key to get real shopping guidance.",
-            "red_flags": ["Demo mode — add your API key for real red flag detection"]
-        },
-        "_demo": True
-    }
 
 
 def extract_text_from_image(image_data: bytes) -> str:
@@ -362,4 +330,5 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
