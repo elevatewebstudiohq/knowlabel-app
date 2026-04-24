@@ -23,12 +23,21 @@
 - **Mother's Day collection live (Apr 21):** Dog Mom, Bernese Mountain Dog Mom, Rhodesian Ridgeback Mom, Husky Mom, Mini Schnauzer Mom, Havanese Mom — 4 products each (mug, shirt, tote, phone case) = 24 MD listings
 - **Store total:** ~44 products on Etsy, ads running
 
+## Agent Roster
+- **Ploutos** (main) — me, financial growth partner & orchestrator
+- **Padmé** (flux agent) — store ops, Printify/Etsy automation
+- **Anakin** — developer agent, KnowLabel app
+- **Scout/Cassian** — market research & daily briefings
+- **R2** — system monitor, auto-fixes infrastructure issues
+- **Pixel** — unknown/TBD
+
 ## Active Projects
 ### ThePetParentStore (Etsy/Printify POD)
 - Shop ID: 27174580
 - 44+ products live, Etsy ads running
 - Mother's Day collection: 6 breeds × 4 products = 24 listings
 - Tote shipping fixed (17/17 updated to free shipping profile 304118679662)
+- Automation scripts lost in workspace restructure — rebuild in Padmé's workspace if needed
 
 ### KnowLabel (formerly ClearLabel)
 - AI ingredient analyzer app — photo → OCR → Claude analysis → safety grade
