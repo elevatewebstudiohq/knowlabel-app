@@ -1,0 +1,14 @@
+
+# Ploutos memory/config files (not part of KnowLabel app)
+MEMORY.md
+AGENTS.md
+SOUL.md
+IDENTITY.md
+USER.md
+TOOLS.md
+HEARTBEAT.md
+automation/secrets.json
+.google_vision_key
+.openai_key
+.kieai_key
+.printify_key
