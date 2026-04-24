@@ -310,7 +310,9 @@ def analyze():
             try:
                 ingredient_text = extract_text_from_image(image_bytes)
             except Exception as e:
-                return jsonify({"error": f"OCR failed: {str(e)}"}), 400
+                return jsonify({"error": f"Couldn't read the label clearly. Try better lighting or a closer shot — or paste the ingredient text manually in the text box above. (Detail: {str(e)})"}), 400
+            if len(ingredient_text) < 20:
+                return jsonify({"error": "Couldn't read the label clearly. Try better lighting or a closer shot — or paste the ingredient text manually in the text box above."}), 400
             profile_raw = request.form.get("profile", "{}")
             try:
                 profile = json.loads(profile_raw)

@@ -730,6 +730,7 @@
         <input type="file" id="file-input" accept="image/*" capture="environment" />
       </div>
       <div id="file-preview"></div>
+      <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem;">📷 Tip: Photograph the label flat in good lighting, as close as possible for best results.</p>
     </div>
   </div>
 
@@ -996,7 +997,11 @@ async function analyze() {
     renderResults(data, activeAllergens);
 
   } catch (err) {
-    errorBox.textContent = '❌ ' + err.message;
+    let msg = err.message;
+    if (activeTab === 'photo' && (msg === 'No ingredient text provided' || msg.toLowerCase().includes('ocr') || msg.toLowerCase().includes('couldn\'t read'))) {
+      msg = "Couldn't read the label clearly. Try better lighting or a closer shot — or paste the ingredient text manually in the text box above.";
+    }
+    errorBox.textContent = '❌ ' + msg;
     errorBox.style.display = 'block';
   } finally {
     loading.style.display = 'none';
