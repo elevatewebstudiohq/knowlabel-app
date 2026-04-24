@@ -8,6 +8,7 @@ import sys
 import json
 import base64
 import logging
+import requests as http_requests
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
@@ -15,14 +16,17 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 # Try environment variable first (Railway / production), fall back to secrets.json for local dev
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")
+GOOGLE_VISION_KEY = os.environ.get("GOOGLE_VISION_API_KEY")
 
 if not ANTHROPIC_KEY and not OPENAI_KEY:
     SECRETS_PATH = Path("/home/node/.openclaw/workspace/automation/secrets.json")
     if SECRETS_PATH.exists():
         with open(SECRETS_PATH) as f:
             secrets = json.load(f)
-        ANTHROPIC_KEY = secrets.get("anthropic_api_key") or secrets.get("anthropic")
-        OPENAI_KEY    = secrets.get("openai_api_key")
+        ANTHROPIC_KEY     = secrets.get("anthropic_api_key") or secrets.get("anthropic")
+        OPENAI_KEY        = secrets.get("openai_api_key")
+        if not GOOGLE_VISION_KEY:
+            GOOGLE_VISION_KEY = secrets.get("google_vision_api_key")
 
 if not ANTHROPIC_KEY and not OPENAI_KEY:
     print("❌ ERROR: No AI API key found.")
@@ -45,13 +49,11 @@ elif OPENAI_KEY:
     print("✅ Using GPT-4o (OpenAI) — add Anthropic key to switch to Claude")
 
 # ── OCR setup ────────────────────────────────────────────────────────────────
-try:
-    import pytesseract
-    from PIL import Image
-    import io
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
+OCR_AVAILABLE = bool(GOOGLE_VISION_KEY)
+if OCR_AVAILABLE:
+    print("✅ OCR: Google Cloud Vision API")
+else:
+    print("⚠️  OCR: No Google Vision API key found — image scanning disabled")
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -260,12 +262,65 @@ def call_ai(ingredient_text: str, profile: dict = None,
 
 
 def extract_text_from_image(image_data: bytes) -> str:
-    """Use Tesseract OCR to extract text from an image."""
-    if not OCR_AVAILABLE:
-        raise RuntimeError("OCR not available — install pytesseract and Pillow")
-    img = Image.open(io.BytesIO(image_data))
-    text = pytesseract.image_to_string(img)
-    return text.strip()
+    """
+    Use Google Cloud Vision API to extract text from an image.
+    Falls back with a clear error message if the API call fails.
+    """
+    if not GOOGLE_VISION_KEY:
+        raise RuntimeError(
+            "Google Vision API key not configured. "
+            "Set GOOGLE_VISION_API_KEY as an environment variable or add "
+            "'google_vision_api_key' to secrets.json."
+        )
+
+    # Base64-encode the image bytes
+    image_b64 = base64.b64encode(image_data).decode("utf-8")
+
+    vision_url = (
+        f"https://vision.googleapis.com/v1/images:annotate"
+        f"?key={GOOGLE_VISION_KEY}"
+    )
+    payload = {
+        "requests": [
+            {
+                "image": {"content": image_b64},
+                "features": [{"type": "TEXT_DETECTION"}],
+            }
+        ]
+    }
+
+    try:
+        resp = http_requests.post(vision_url, json=payload, timeout=15)
+        resp.raise_for_status()
+    except http_requests.exceptions.Timeout:
+        raise RuntimeError(
+            "Google Vision API timed out. Please try again."
+        )
+    except http_requests.exceptions.RequestException as e:
+        raise RuntimeError(
+            f"Google Vision API request failed: {str(e)}"
+        )
+
+    data = resp.json()
+
+    # Surface any API-level errors
+    responses = data.get("responses", [])
+    if not responses:
+        raise RuntimeError("Google Vision API returned an empty response.")
+
+    first = responses[0]
+    if "error" in first:
+        err = first["error"]
+        raise RuntimeError(
+            f"Google Vision API error {err.get('code', '?')}: {err.get('message', 'unknown error')}"
+        )
+
+    # textAnnotations[0].description contains the full extracted text
+    annotations = first.get("textAnnotations", [])
+    if not annotations:
+        return ""  # No text detected — caller will handle the empty-text case
+
+    return annotations[0].get("description", "").strip()
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
