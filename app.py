@@ -81,6 +81,7 @@ Respond with this exact structure:
   "summary": {
     "letter_grade": "A|B|C|D|F",
     "bottom_line": "One plain-English paragraph summarizing this product for a regular person",
+    "grade_explanation": "1-2 sentence plain English explanation of WHY the product received that specific grade. Reference the specific concerning ingredients that pulled the grade down and explain the real-world implication (e.g. daily use, hormone disruption, environmental concern). Written for a non-technical user. Do NOT just restate the grade — explain the reasoning behind it.",
     "safe_count": 0,
     "caution_count": 0,
     "avoid_count": 0,
@@ -113,6 +114,14 @@ Letter grade guide:
 - C: Mix of safe and concerning ingredients
 - D: Multiple concerning ingredients
 - F: Dominated by avoid-rated ingredients
+
+GRADE EXPLANATION guide (for the grade_explanation field):
+- Must be 1-2 sentences, plain English, written for a non-technical user
+- For lower grades (C/D/F): name the specific ingredients that pulled the grade down and state the real-world implication (e.g. "daily use risk", "hormone disruption", "environmental concern", "irritation potential")
+- For higher grades (A/B): celebrate what makes it clean — name what's good about the formulation
+- Do NOT simply restate the grade (e.g. do not write "This product received a B because it has mostly safe ingredients")
+- Example C-grade: "This product contains chemical UV filters linked to potential hormone disruption and reef damage. While many base ingredients are safe, the active sunscreen agents lower the overall safety profile — especially for daily use."
+- Example A-grade: "All ingredients are naturally sourced with no synthetic additives or concerning chemicals. This product earns an A for its clean, minimal formulation."
 
 DOSAGE ANALYSIS — when ingredient amounts are listed (e.g. Vitamin C 750mg, Sodium 400mg):
 1. Compare against established safe limits (RDA, Tolerable Upper Limit from NIH/FDA/EFSA)

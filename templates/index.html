@@ -294,6 +294,19 @@
 
     .grade-info h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
     .grade-info p  { font-size: 0.875rem; color: var(--muted); line-height: 1.5; }
+    .grade-disclaimer {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 0.35rem;
+      line-height: 1.4;
+    }
+    #grade-explanation {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.55;
+      margin-bottom: 0.4rem;
+    }
 
     .count-row {
       display: flex;
@@ -750,6 +763,8 @@
       <div class="grade-circle" id="grade-circle">?</div>
       <div class="grade-info">
         <h3>Overall Assessment</h3>
+        <p class="grade-disclaimer">*Overall grade reflects cumulative formulation safety, not just individual ingredients.</p>
+        <p id="grade-explanation"></p>
         <p id="bottom-line"></p>
         <div class="count-row" id="count-row"></div>
       </div>
@@ -1003,6 +1018,14 @@ function renderResults(data, selectedAllergens) {
   circle.textContent = grade;
   circle.className   = 'grade-circle grade-' + (grade === '?' ? 'x' : grade);
   document.getElementById('bottom-line').textContent = summary.bottom_line || '';
+
+  const explanationEl = document.getElementById('grade-explanation');
+  if (summary.grade_explanation) {
+    explanationEl.textContent = summary.grade_explanation;
+    explanationEl.style.display = 'block';
+  } else {
+    explanationEl.style.display = 'none';
+  }
 
   const countRow = document.getElementById('count-row');
   countRow.innerHTML = '';
