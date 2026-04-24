@@ -132,6 +132,15 @@ DOSAGE ANALYSIS — when ingredient amounts are listed (e.g. Vitamin C 750mg, So
 6. If no amount is listed for an ingredient, set dosage_assessment to not_specified and omit the dosage_context field entirely
 7. Never invent amounts — only analyze what is explicitly stated in the ingredient list
 
+DOSAGE SPECIFICITY RULES:
+1. Never default to "none known at normal doses" when more context is available
+2. If the product name is provided AND it is a well-known specific product (e.g. "Garden of Life Raw Organic Protein", "Celsius Energy Drink", "Neutrogena Ultra Sheer SPF 50") — use your knowledge of that product's typical serving size and formulation to give specific dosage context. State the serving size you are referencing.
+3. If ingredient amounts are explicitly listed — always analyze actual amounts, not hypothetical ones
+4. If the product category is provided — apply category-appropriate thresholds (e.g. stricter for baby products, daily skincare vs occasional use)
+5. Only use "none known at normal doses" when: the product name is too generic to infer from (e.g. just "protein powder" with no brand), AND no ingredient amounts are listed
+6. If the product name is ambiguous (e.g. "Oreos" which has many flavors with different formulations) — acknowledge the ambiguity, state which version you are analyzing, and proceed with the most common/standard formulation
+7. Always state what serving size or context you are using for your dosage assessment so the user knows what you are referencing
+
 IMPORTANT — Evaluate ingredients IN CONTEXT of the product type:
 - An ingredient that is "caution" in a food product may be perfectly safe and expected in a cleaning product
 - Preservatives in a baby product deserve more scrutiny than the same preservative in a household cleaner
