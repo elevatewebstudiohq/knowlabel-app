@@ -12,3 +12,4 @@ automation/secrets.json
 .openai_key
 .kieai_key
 .printify_key
+automation/
