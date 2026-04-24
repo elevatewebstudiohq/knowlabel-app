@@ -207,10 +207,60 @@ def build_product_context(product_name: str = "", product_category: str = "", pr
     return "\n".join(lines) + "\n"
 
 
+def _make_ai_request(user_msg: str, force_json: bool = False) -> str:
+    """Make a single AI API call and return the raw text response.
+    If force_json=True, apply stricter JSON enforcement on the request.
+    """
+    if AI_PROVIDER == "anthropic":
+        messages = [{"role": "user", "content": user_msg}]
+        if force_json:
+            # Assistant prefill forces Claude to begin its reply with "{"
+            messages.append({"role": "assistant", "content": "{"})
+        response = client.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            messages=messages
+        )
+        raw = response.content[0].text
+        if force_json:
+            # We prefilled "{", so stitch it back on
+            raw = "{" + raw
+        return raw
+
+    elif AI_PROVIDER == "openai":
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user",   "content": user_msg}
+            ],
+            max_tokens=4096,
+            response_format={"type": "json_object"}
+        )
+        return response.choices[0].message.content
+
+    raise RuntimeError(f"Unsupported AI_PROVIDER: {AI_PROVIDER}")
+
+
+def _strip_code_fences(raw: str) -> str:
+    """Remove markdown code fences from a raw AI response."""
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return raw.strip()
+
+
 def call_ai(ingredient_text: str, profile: dict = None,
             product_name: str = "", product_category: str = "",
             product_description: str = "") -> dict:
-    """Call Claude or OpenAI and return parsed JSON response."""
+    """Call Claude or OpenAI and return parsed JSON response.
+    Retries once with stricter JSON enforcement if the first response
+    cannot be parsed. Raises ValueError with a user-friendly message
+    if both attempts fail.
+    """
     profile_note = ""
     if profile:
         flags = []
@@ -229,36 +279,25 @@ def call_ai(ingredient_text: str, profile: dict = None,
         profile_note=profile_note
     )
 
-    if AI_PROVIDER == "anthropic":
-        response = client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}]
+    # ── Attempt 1 ────────────────────────────────────────────────────────────
+    raw = _strip_code_fences(_make_ai_request(user_msg))
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        app.logger.error("JSON parse failed (attempt 1): %s", e)
+        app.logger.error("Raw AI response (attempt 1):\n%s", raw)
+
+    # ── Attempt 2 — stricter JSON enforcement ────────────────────────────────
+    raw2 = _strip_code_fences(_make_ai_request(user_msg, force_json=True))
+    try:
+        return json.loads(raw2)
+    except json.JSONDecodeError as e:
+        app.logger.error("JSON parse failed (attempt 2): %s", e)
+        app.logger.error("Raw AI response (attempt 2):\n%s", raw2)
+        raise ValueError(
+            "Analysis failed \u2014 please try again. "
+            "If the problem persists, try simplifying the ingredient list."
         )
-        raw = response.content[0].text
-
-    elif AI_PROVIDER == "openai":
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": user_msg}
-            ],
-            max_tokens=4096,
-            response_format={"type": "json_object"}
-        )
-        raw = response.choices[0].message.content
-
-    # Strip markdown code fences if present
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
-
-    return json.loads(raw)
 
 
 def extract_text_from_image(image_data: bytes) -> str:
@@ -400,11 +439,18 @@ def analyze():
         result["provider"] = AI_PROVIDER
         return jsonify(result)
 
+    except ValueError as e:
+        # User-friendly errors raised by call_ai (e.g. both JSON parse attempts failed)
+        app.logger.error("call_ai ValueError: %s", e)
+        return jsonify({"error": str(e)}), 500
     except json.JSONDecodeError as e:
-        app.logger.error(f"JSON parse error: {e}")
-        return jsonify({"error": "AI returned invalid JSON — try again"}), 500
+        app.logger.error("JSON parse error: %s", e)
+        return jsonify({"error": (
+            "Analysis failed \u2014 please try again. "
+            "If the problem persists, try simplifying the ingredient list."
+        )}), 500
     except Exception as e:
-        app.logger.error(f"Analyze error: {e}")
+        app.logger.error("Analyze error: %s", e)
         return jsonify({"error": str(e)}), 500
 
 

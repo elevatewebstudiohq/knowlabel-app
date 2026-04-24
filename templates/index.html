@@ -998,6 +998,15 @@ async function analyze() {
 
   } catch (err) {
     let msg = err.message;
+    // Replace technical browser / SDK errors with something a regular user can understand
+    if (
+      msg === 'The string did not match the expected pattern.' ||
+      msg.toLowerCase().includes('did not match the expected pattern') ||
+      msg.toLowerCase().includes('failed to fetch') ||
+      msg.toLowerCase().includes('networkerror')
+    ) {
+      msg = 'Something went wrong analyzing these ingredients. Please try again.';
+    }
     if (activeTab === 'photo' && (msg === 'No ingredient text provided' || msg.toLowerCase().includes('ocr') || msg.toLowerCase().includes('couldn\'t read'))) {
       msg = "Couldn't read the label clearly. Try better lighting or a closer shot — or paste the ingredient text manually in the text box above.";
     }
