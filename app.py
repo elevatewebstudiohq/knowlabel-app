@@ -147,6 +147,15 @@ IMPORTANT — Be balanced and honest:
 For recommendations: be specific and actionable, not generic. Tailor advice to the actual product category.
 If the product context was provided by the user, make the recommendations directly relevant to that category and use case.
 
+ALTERNATIVE PRODUCT RULES — follow these strictly when populating the "alternatives" field:
+1. Only recommend a specific named product as an alternative if you are highly confident it would score an A grade (no caution or avoid ingredients, clean formulation, minimal processing).
+2. If no such A-grade product comes to mind for that category, DO NOT recommend any specific product by name.
+3. Instead, tell the user what clean ingredients to look FOR in that category and which ingredients/chemicals to avoid.
+4. Never recommend a product that has any ingredients you would flag as caution or avoid — even if it is "better" than the scanned product.
+5. The standard is: would this alternative pass KnowLabel's own analysis with flying colors? If not, don't mention it.
+
+Example application: For energy drinks, instead of recommending a specific brand, say "Look for drinks with green tea extract, B vitamins, and natural caffeine sources. Avoid sucralose, artificial flavors, and proprietary blends."
+
 Be honest, educational, and specific. This helps real people make informed choices."""
 
 USER_PROMPT_TEMPLATE = """Please analyze these product ingredients:
