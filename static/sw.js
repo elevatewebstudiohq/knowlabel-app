@@ -1,4 +1,4 @@
-// ClearLabel Service Worker
+// KnowLabel Service Worker
 const CACHE_NAME = 'clearlabel-v1';
 const STATIC_ASSETS = [
   '/',

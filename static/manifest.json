@@ -1,6 +1,6 @@
 {
-  "name": "ClearLabel — Know Your Ingredients",
-  "short_name": "ClearLabel",
+  "name": "KnowLabel — Know Your Ingredients",
+  "short_name": "KnowLabel",
   "description": "AI-powered ingredient education. Know what's actually in your products.",
   "start_url": "/",
   "display": "standalone",
