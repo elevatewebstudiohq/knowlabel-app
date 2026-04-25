@@ -986,6 +986,7 @@ async function analyze() {
 
     } else {
       if (!selectedFile) throw new Error('Please select an image first');
+      if (selectedFile.size === 0) throw new Error('Your photo was lost when you left the page. Please select it again.');
       const form = new FormData();
       form.append('file', selectedFile);
       form.append('profile', JSON.stringify({ allergens: activeAllergens }));
@@ -1243,8 +1244,22 @@ function renderLabelWarnings(warnings) {
   }
   warnings.forEach(w => {
     const item = document.createElement('div');
-    item.style.cssText = 'font-size:0.92rem; color:#92400e; margin-bottom:0.3rem; padding-left:0.25rem;';
-    item.textContent = w;
+    let text;
+    let isAllergyRisk = false;
+    if (typeof w === 'string') {
+      text = w;
+    } else if (typeof w === 'object' && w !== null) {
+      text = w.warning || w.text || JSON.stringify(w);
+      isAllergyRisk = !!w.allergy_risk;
+    } else {
+      text = String(w);
+    }
+    if (isAllergyRisk) {
+      item.style.cssText = 'font-size:0.92rem; color:#b91c1c; background:#fee2e2; border-left:3px solid #ef4444; margin-bottom:0.4rem; padding:0.25rem 0.5rem; border-radius:0.25rem;';
+    } else {
+      item.style.cssText = 'font-size:0.92rem; color:#92400e; margin-bottom:0.3rem; padding-left:0.25rem;';
+    }
+    item.textContent = text;
     list.appendChild(item);
   });
   section.style.display = 'block';
