@@ -17,6 +17,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")
 GOOGLE_VISION_KEY = os.environ.get("GOOGLE_VISION_API_KEY")
+GOOGLE_VISION_KEY_SOURCE = "env" if GOOGLE_VISION_KEY else None
 
 if not ANTHROPIC_KEY and not OPENAI_KEY:
     SECRETS_PATH = Path("/home/node/.openclaw/workspace/automation/secrets.json")
@@ -27,6 +28,16 @@ if not ANTHROPIC_KEY and not OPENAI_KEY:
         OPENAI_KEY        = secrets.get("openai_api_key")
         if not GOOGLE_VISION_KEY:
             GOOGLE_VISION_KEY = secrets.get("google_vision_api_key")
+            if GOOGLE_VISION_KEY:
+                GOOGLE_VISION_KEY_SOURCE = "secrets.json"
+
+# Fall back to reading from .google_vision_key file
+if not GOOGLE_VISION_KEY:
+    _VISION_KEY_FILE = Path("/home/node/.openclaw/workspace/.google_vision_key")
+    if _VISION_KEY_FILE.exists():
+        GOOGLE_VISION_KEY = _VISION_KEY_FILE.read_text().strip()
+        if GOOGLE_VISION_KEY:
+            GOOGLE_VISION_KEY_SOURCE = "file(.google_vision_key)"
 
 if not ANTHROPIC_KEY and not OPENAI_KEY:
     print("❌ ERROR: No AI API key found.")
@@ -456,7 +467,12 @@ def analyze():
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "ai_provider": AI_PROVIDER, "ocr": OCR_AVAILABLE})
+    return jsonify({
+        "status": "ok",
+        "ai_provider": AI_PROVIDER,
+        "ocr": OCR_AVAILABLE,
+        "google_vision_key_source": GOOGLE_VISION_KEY_SOURCE or "missing"
+    })
 
 
 if __name__ == "__main__":

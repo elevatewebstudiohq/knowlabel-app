@@ -997,18 +997,24 @@ async function analyze() {
     renderResults(data, activeAllergens);
 
   } catch (err) {
-    let msg = err.message;
-    // Replace technical browser / SDK errors with something a regular user can understand
-    if (
-      msg === 'The string did not match the expected pattern.' ||
-      msg.toLowerCase().includes('did not match the expected pattern') ||
-      msg.toLowerCase().includes('failed to fetch') ||
-      msg.toLowerCase().includes('networkerror')
-    ) {
-      msg = 'Something went wrong analyzing these ingredients. Please try again.';
-    }
-    if (activeTab === 'photo' && (msg === 'No ingredient text provided' || msg.toLowerCase().includes('ocr') || msg.toLowerCase().includes('couldn\'t read'))) {
+    let msg = err.message || '';
+    // Only show specific user-friendly validation messages as-is;
+    // everything else (technical errors, API errors, SDK errors) gets genericized.
+    const isUserValidation = (
+      msg === 'Please paste an ingredient list first' ||
+      msg === 'Please select an image first'
+    );
+    const isPhotoReadError = activeTab === 'photo' && (
+      msg === 'No ingredient text provided' ||
+      msg.toLowerCase().includes('ocr') ||
+      msg.toLowerCase().includes("couldn't read")
+    );
+
+    if (isPhotoReadError) {
       msg = "Couldn't read the label clearly. Try better lighting or a closer shot — or paste the ingredient text manually in the text box above.";
+    } else if (!isUserValidation) {
+      // Catch ALL other errors — technical, network, API, SDK, pattern match, etc.
+      msg = 'Something went wrong. Please try again.';
     }
     errorBox.textContent = '❌ ' + msg;
     errorBox.style.display = 'block';
