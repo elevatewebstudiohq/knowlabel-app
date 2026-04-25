@@ -727,7 +727,7 @@
         <div style="font-size: 2.5rem;">📸</div>
         <p>Tap to upload a photo of the ingredient label</p>
         <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
-        <input type="file" id="file-input" accept="image/*" capture="environment" />
+        <input type="file" id="file-input" accept="image/*" capture="environment" novalidate oninvalid="return false" />
       </div>
       <div id="file-preview"></div>
       <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem;">📷 Tip: Photograph the label flat in good lighting, as close as possible for best results.</p>
@@ -927,7 +927,7 @@ uploadZone.addEventListener('drop', e => {
   const file = e.dataTransfer.files[0];
   if (file) handleFile(file);
 });
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+fileInput.addEventListener('change', () => { try { if (fileInput.files[0]) handleFile(fileInput.files[0]); } catch(err) { /* suppress browser validation errors */ } });
 
 function handleFile(file) {
   selectedFile = file;
@@ -935,7 +935,10 @@ function handleFile(file) {
 }
 
 // ── Analyze ────────────────────────────────────────────────────────────────
-document.getElementById('analyze-btn').addEventListener('click', analyze);
+document.getElementById('analyze-btn').addEventListener('click', function(event) {
+  event.preventDefault();
+  try { analyze(); } catch(err) { const eb = document.getElementById('error-box'); if(eb){ eb.textContent = '❌ Something went wrong. Please try again.'; eb.style.display = 'block'; } }
+});
 
 let activeAllergens = [];
 
