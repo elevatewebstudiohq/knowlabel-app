@@ -934,6 +934,35 @@ function handleFile(file) {
   document.getElementById('file-preview').textContent = `✅ ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
 }
 
+function convertToJpeg(file) {
+  return new Promise((resolve) => {
+    // If already JPEG or PNG, use as-is
+    if (file.type === 'image/jpeg' || file.type === 'image/png') {
+      resolve(file);
+      return;
+    }
+    // Convert to JPEG via canvas
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(function(blob) {
+        URL.revokeObjectURL(url);
+        resolve(new File([blob], 'photo.jpg', {type: 'image/jpeg'}));
+      }, 'image/jpeg', 0.9);
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(url);
+      resolve(file); // fallback to original
+    };
+    img.src = url;
+  });
+}
+
 // ── Analyze ────────────────────────────────────────────────────────────────
 document.getElementById('analyze-btn').addEventListener('click', function(event) {
   event.preventDefault();
@@ -986,9 +1015,10 @@ async function analyze() {
 
     } else {
       if (!selectedFile) throw new Error('Please select an image first');
-      if (selectedFile.size === 0) throw new Error('Your photo was lost when you left the page. Please select it again.');
+      const convertedFile = await convertToJpeg(selectedFile);
+      if (convertedFile.size === 0) throw new Error('Your photo was lost when you left the page. Please select it again.');
       const form = new FormData();
-      form.append('file', selectedFile);
+      form.append('file', convertedFile);
       form.append('profile', JSON.stringify({ allergens: activeAllergens }));
       form.append('product_name',        productCtx.product_name);
       form.append('product_category',    productCtx.product_category);
