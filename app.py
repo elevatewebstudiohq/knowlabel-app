@@ -468,8 +468,11 @@ def analyze():
             "If the problem persists, try simplifying the ingredient list."
         )}), 500
     except Exception as e:
+        import traceback
+        print(f"ANALYZE ERROR: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
         app.logger.error("Analyze error: %s", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Error: {type(e).__name__}: {str(e)[:200]}"}), 500
 
 
 @app.route("/health")
