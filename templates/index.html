@@ -721,7 +721,7 @@
         <div style="font-size: 2.5rem;">📸</div>
         <p>Tap to upload a photo of the ingredient label</p>
         <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
-        <input type="file" id="file-input" accept="image/*" capture="environment" novalidate oninvalid="return false" />
+        <input type="file" id="file-input" accept="image/*" novalidate oninvalid="return false" />
       </div>
       <div id="file-preview"></div>
       <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem;">📷 Tip: Photograph the label flat in good lighting, as close as possible for best results.</p>
@@ -769,6 +769,12 @@
     <div class="offenders-card" id="offenders-card" style="display:none;">
       <h3>⚠️ Watch Out For</h3>
       <div class="offenders-list" id="offenders-list"></div>
+    </div>
+
+    <!-- Label warnings (may contain / trace allergens) -->
+    <div id="label-warnings-section" style="display:none; margin-bottom:1rem; padding:0.85rem 1rem; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-radius:10px;">
+      <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.08em; color:#b45309; margin-bottom:0.5rem; font-weight:700;">⚠️ Label Warnings</div>
+      <div id="label-warnings-list"></div>
     </div>
 
     <!-- Ingredient cards -->
@@ -1098,6 +1104,7 @@ function renderResults(data, selectedAllergens) {
   });
 
   renderRecommendations(data.recommendations);
+  renderLabelWarnings(data.label_warnings);
 
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1224,6 +1231,23 @@ function renderRecommendations(reco) {
 
   section.style.display = (alternatives.length > 0 || reco.what_to_look_for || redFlags.length > 0)
     ? 'block' : 'none';
+}
+
+function renderLabelWarnings(warnings) {
+  const section = document.getElementById('label-warnings-section');
+  const list    = document.getElementById('label-warnings-list');
+  list.innerHTML = '';
+  if (!warnings || warnings.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  warnings.forEach(w => {
+    const item = document.createElement('div');
+    item.style.cssText = 'font-size:0.92rem; color:#92400e; margin-bottom:0.3rem; padding-left:0.25rem;';
+    item.textContent = w;
+    list.appendChild(item);
+  });
+  section.style.display = 'block';
 }
 
 function escapeHTML(str) {

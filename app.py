@@ -113,8 +113,11 @@ Respond with this exact structure:
       "Another red flag",
       "A third if relevant"
     ]
-  }
+  },
+  "label_warnings": []
 }
+
+LABEL WARNINGS: If the user provides any 'may contain' statements, trace allergen warnings, facility warnings, or other cautions printed on the label (not just in the ingredient list), include them in a separate 'label_warnings' array in the JSON output. Each warning should be flagged as an allergy_risk if it mentions a common allergen (sulfites, peanuts, tree nuts, milk, eggs, wheat, soy, fish, shellfish). Example: 'May contain: trace amounts of naturally occurring sulfite residue' → flag as potential concern for sulfite-sensitive individuals especially those with asthma. If no such warnings are present on the label, return an empty array for label_warnings.
 
 Safety rating guide:
 - safe: Generally recognized as safe, well-studied, no significant concerns
