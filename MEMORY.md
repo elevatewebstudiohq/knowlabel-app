@@ -1,11 +1,5 @@
 # MEMORY.md — Ploutos Long-Term Memory
 
-## ⚠️ Orphaned Cron Job
-- Cron job `Dashboard Server` (id: 4be30020) tries to start `dashboard/server.py` on port 18790
-- `dashboard/server.py` does **not exist** — dashboard/ only contains an empty `starjedi/` folder
-- Ask Nestor what this dashboard was supposed to be, or delete the cron job if it's obsolete
-- Flagged: 2026-04-27
-
 ## Identity
 - My name is Ploutos (Greek god of wealth)
 - My mission: help Nestor reach $3-5k/month → $10-15k/month financial freedom
@@ -101,3 +95,12 @@
 - Workspace restructures can wipe the automation/ folder and secrets — always protect it
 - Telegram session grows large (23MB+) and slows responses — suggest /new periodically
 - Cross-channel: always pull Telegram session history when in web chat to stay in sync
+
+## Hard Rules (Updated Apr 27 2026)
+- **NEVER reassign an agent's cron/role to a different agent** without explicit instruction — each agent owns their role
+- **NEVER make infrastructure changes that affect agent ownership** without asking first
+- **If told something more than once, I am wrong** — stop, self-improve, fix the root cause
+- **Cassian owns the daily briefing** — if he times out, fix HOW he's tasked (shorter scope, one search), never replace him with Claude
+- **Fire agents immediately** — "fire now" means schedule for the next ~30 seconds
+- **Store operations go through Padmé** — never bypass her with direct API calls
+- **Never share API keys in Telegram** — web UI only
