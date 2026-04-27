@@ -186,7 +186,20 @@
       background: rgba(56,189,248,0.05);
     }
     .upload-zone p { color: var(--muted); font-size: 0.875rem; margin-top: 0.5rem; }
-    #file-input { display: none; }
+    #file-input-gallery, #file-input-camera { display: none; }
+    .upload-btn {
+      padding: 0.65rem 1.2rem;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .upload-btn:hover { opacity: 0.9; }
+    .upload-btn:active { transform: scale(0.98); }
     #file-preview {
       margin-top: 0.75rem;
       font-size: 0.85rem;
@@ -722,9 +735,14 @@
     <div id="tab-photo" class="tab-panel">
       <div class="upload-zone" id="upload-zone">
         <div style="font-size: 2.5rem;">📸</div>
-        <p>Tap to upload or drag and drop</p>
+        <p>Choose how to add your photo</p>
         <p style="font-size: 0.78rem; margin-top: 0.25rem;">Supports JPG, PNG, HEIC</p>
-        <input type="file" id="file-input" accept="image/*" style="display:none">
+        <input type="file" id="file-input-gallery" accept="image/*" style="display:none">
+        <input type="file" id="file-input-camera" accept="image/*" capture="environment" style="display:none">
+        <div style="display:flex; gap:0.75rem; margin-top:1rem; justify-content:center; flex-wrap:wrap;">
+          <button type="button" class="upload-btn" onclick="document.getElementById('file-input-camera').click()">📷 Take Photo</button>
+          <button type="button" class="upload-btn" onclick="document.getElementById('file-input-gallery').click()">🖼️ Upload from Library</button>
+        </div>
       </div>
       <div id="file-preview"></div>
       <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem;">📷 Tip: Photograph the label flat in good lighting, as close as possible for best results.</p>
@@ -928,8 +946,15 @@ uploadZone.addEventListener('drop', e => {
   const file = e.dataTransfer.files[0];
   if (file) handleFile(file);
 });
-uploadZone.addEventListener('click', () => document.getElementById('file-input').click());
-document.getElementById('file-input').addEventListener('change', function() { try { if (this.files[0]) handleFile(this.files[0]); } catch(err) { /* suppress browser validation errors */ } });
+const fileInputGallery = document.getElementById('file-input-gallery');
+const fileInputCamera = document.getElementById('file-input-camera');
+
+fileInputGallery.addEventListener('change', function() {
+  if (this.files[0]) handleFile(this.files[0]);
+});
+fileInputCamera.addEventListener('change', function() {
+  if (this.files[0]) handleFile(this.files[0]);
+});
 
 function handleFile(file) {
   selectedFile = file;
