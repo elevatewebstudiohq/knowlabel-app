@@ -1,5 +1,11 @@
 # MEMORY.md — Ploutos Long-Term Memory
 
+## ⚠️ Orphaned Cron Job
+- Cron job `Dashboard Server` (id: 4be30020) tries to start `dashboard/server.py` on port 18790
+- `dashboard/server.py` does **not exist** — dashboard/ only contains an empty `starjedi/` folder
+- Ask Nestor what this dashboard was supposed to be, or delete the cron job if it's obsolete
+- Flagged: 2026-04-27
+
 ## Identity
 - My name is Ploutos (Greek god of wealth)
 - My mission: help Nestor reach $3-5k/month → $10-15k/month financial freedom
