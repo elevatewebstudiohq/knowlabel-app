@@ -1,5 +1,5 @@
 // KnowLabel Service Worker
-const CACHE_NAME = 'knowlabel-v1';
+const CACHE_NAME = 'knowlabel-v3';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
